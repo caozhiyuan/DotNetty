@@ -1,8 +1,40 @@
-###### -- File Created With Git Source Control Provider 2015 -- ######
-###### -- From https://github.com/github/gitignore -- ######
-###### -- Warning Regenerating this file will erase all your custom ignores, unless you add them below the Custom Ignore section at the bottom --  ######
-
-
-
-###### -- Custom Ignore Section, Make sure all files you add to the git repo are below this line  --  ######
-
+[Oo]bj/
+[Bb]in/
+TestResults/
+PerfResults/
+.nuget/
+.fake/
+_ReSharper.*/
+.idea/
+*.sln.iml
+packages/
+artifacts/
+PublishProfiles/
+*.user
+*.suo
+*.cache
+*.docstates
+_ReSharper.*
+nuget.exe
+*net45.csproj
+*net451.csproj
+*k10.csproj
+*.psess
+*.vsp
+*.pidb
+*.userprefs
+*DS_Store
+*.ncrunchsolution
+*.*sdf
+*.ipch
+*.sln.ide
+*.lock.json
+*.db
+.vs/
+[Tt]ools/Cake.*
+[Tt]ools/NBench.*
+[Tt]ools/NBench
+/build/
+.dotnet/
+DotNetty.*.nuget.targets
+*.exe
