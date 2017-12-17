@@ -15,6 +15,7 @@ namespace DotNetty.Rpc.Client
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
+    using Newtonsoft.Json.Linq;
 
     public class NettyClient
     {
@@ -77,7 +78,7 @@ namespace DotNetty.Rpc.Client
             {
                 throw new Exception(result.Error);
             }
-            return (T)result.Data;
+            return ((JObject)result.Data).ToObject<T>();
         }
 
         void WaitConnect()
