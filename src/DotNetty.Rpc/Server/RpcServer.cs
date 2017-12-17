@@ -1,8 +1,10 @@
 ﻿namespace DotNetty.Rpc.Server
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Threading.Tasks;
     using DotNetty.Codecs;
+    using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Rpc.Protocol;
     using DotNetty.Rpc.Service;
@@ -22,7 +24,12 @@
 
         public async Task StartAsync()
         {
-            ModuleRegistration();
+            IModule[] modules = Registrations.FindModules();
+            foreach (IModule module in modules)
+            {
+                module.Initialize();
+            }
+            ConcurrentDictionary<string, Type> messageTypes = Registrations.MessageTypes;
 
             var bossGroup = new MultithreadEventLoopGroup();
             var workerGroup = new MultithreadEventLoopGroup(Paralle);
@@ -37,11 +44,10 @@
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
-
                         pipeline.AddLast(new IdleStateHandler(720, 360, 0));
                         pipeline.AddLast(new LengthFieldBasedFrameDecoder(int.MaxValue, 0, 4, 0, 0));
-                        pipeline.AddLast(new RpcDecoder<RpcRequest>());
-                        pipeline.AddLast(new RpcEncoder<RpcResponse>());
+                        pipeline.AddLast(new RpcDecoder(messageTypes));
+                        pipeline.AddLast(new RpcEncoder());
                         pipeline.AddLast(new RpcHandler());
                     }));
 
@@ -57,15 +63,6 @@
             finally
             {
                 Task.WaitAll(bossGroup.ShutdownGracefullyAsync(), workerGroup.ShutdownGracefullyAsync());
-            }
-        }
-
-        static void ModuleRegistration()
-        {
-            IModule[] modules = ModuleRegistrations.FindModules();
-            foreach (IModule module in modules)
-            {
-                module.Initialize();
             }
         }
     }

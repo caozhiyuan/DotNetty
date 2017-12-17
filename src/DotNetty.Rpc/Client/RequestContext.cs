@@ -7,13 +7,13 @@ namespace DotNetty.Rpc.Client
 
     internal class RequestContext
     {
-        public RequestContext(TaskCompletionSource<RpcResponse> tcs, IScheduledTask timeOutTimer)
+        public RequestContext(TaskCompletionSource<RpcMessage> tcs, IScheduledTask timeOutTimer)
         {
             this.TaskCompletionSource = tcs;
             this.TimeOutTimer = timeOutTimer;
         }
 
-        public TaskCompletionSource<RpcResponse> TaskCompletionSource { get; private set; }
+        public TaskCompletionSource<RpcMessage> TaskCompletionSource { get; private set; }
 
         public IScheduledTask TimeOutTimer { get; private set; }
     }

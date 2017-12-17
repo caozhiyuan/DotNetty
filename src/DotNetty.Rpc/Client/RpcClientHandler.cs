@@ -9,6 +9,7 @@
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Rpc.Protocol;
+    using DotNetty.Rpc.Service;
     using DotNetty.Transport.Channels;
 
     public class RpcClientHandler : ChannelHandlerAdapter
@@ -42,7 +43,7 @@
 
         public override void ChannelRead(IChannelHandlerContext ctx, object message)
         {
-            var response = (RpcResponse)message;
+            var response = (RpcMessage)message;
             string requestId = response.RequestId;
             if (requestId == "-1")
             {
@@ -64,9 +65,9 @@
             }
         }
 
-        public Task<RpcResponse> SendRequest(RpcRequest request, int timeout = 10000)
+        public Task<RpcMessage> SendRequest(RpcMessage request, int timeout = 10000)
         {
-            var tcs = new TaskCompletionSource<RpcResponse>();
+            var tcs = new TaskCompletionSource<RpcMessage>();
 
             IScheduledTask timeOutTimer = this.channel.EventLoop.Schedule(n => this.GetRpcResponseTimeOut(n), request, TimeSpan.FromMilliseconds(timeout));
 
@@ -81,7 +82,7 @@
 
         void GetRpcResponseTimeOut(object n)
         {
-            string requestId = ((RpcRequest)n).RequestId;
+            string requestId = ((RpcMessage)n).RequestId;
             RequestContext requestContext;
             this.pendingRpc.TryGetValue(requestId, out requestContext);
             if (requestContext != null)
@@ -112,10 +113,11 @@
                         Logger.Debug("WriterIdle send request ping");
                     }
 
-                    context.WriteAndFlushAsync(new RpcRequest
+                    context.WriteAndFlushAsync(new RpcMessage
                     {
                         RequestId = "-1",
-                        Message = "ping"
+                        Message = new Ping(),
+                        MessageType = (byte)MessageType.Request
                     });
                 }
             }

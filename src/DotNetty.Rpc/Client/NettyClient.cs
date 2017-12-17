@@ -3,10 +3,12 @@ using System.Threading.Tasks;
 
 namespace DotNetty.Rpc.Client
 {
+    using System.Collections.Concurrent;
     using System.Net;
     using System.Threading;
     using DotNetty.Codecs;
     using DotNetty.Common.Internal.Logging;
+    using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Rpc.Protocol;
     using DotNetty.Rpc.Service;
@@ -28,6 +30,8 @@ namespace DotNetty.Rpc.Client
 
         internal void Connect(EndPoint socketAddress)
         {
+            ConcurrentDictionary<string, Type> messageTypes = Registrations.MessageTypes;
+
             this.bootstrap = new Bootstrap();
             this.bootstrap.Group(WorkerGroup)
                 .Channel<TcpSocketChannel>()
@@ -36,10 +40,12 @@ namespace DotNetty.Rpc.Client
                 .Handler(new ActionChannelInitializer<ISocketChannel>(c =>
                 {
                     IChannelPipeline pipeline = c.Pipeline;
+
                     pipeline.AddLast(new IdleStateHandler(60, 30, 0));
                     pipeline.AddLast(new LengthFieldBasedFrameDecoder(int.MaxValue, 0, 4, 0, 0));
-                    pipeline.AddLast(new RpcDecoder<RpcResponse>());
-                    pipeline.AddLast(new RpcEncoder<RpcRequest>());
+                    pipeline.AddLast(new RpcDecoder(messageTypes));
+                    pipeline.AddLast(new RpcEncoder());
+
                     pipeline.AddLast(new ReconnectHandler(this.DoConnect));
 
                     pipeline.AddLast(new RpcClientHandler());
@@ -55,21 +61,23 @@ namespace DotNetty.Rpc.Client
             get { return Interlocked.Increment(ref this.requestId); }
         }
 
-        public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000) where T : new()
+        public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000) where T : IMessage
         {
             this.WaitConnect();
 
-            var rpcRequest = new RpcRequest
+            var rpcRequest = new RpcMessage
             {
                 RequestId = this.RequestId.ToString(),
+                MessageType = (byte)MessageType.Request,
                 Message = request
             };
-            RpcResponse rpcReponse = await this.clientRpcHandler.SendRequest(rpcRequest, timeout);
-            if (rpcReponse.Error != null)
+            var rpcReponse = await this.clientRpcHandler.SendRequest(rpcRequest, timeout);
+            var result = (Result)rpcReponse.Message;
+            if (result.Error != null)
             {
-                throw new Exception(rpcReponse.Error);
+                throw new Exception(result.Error);
             }
-            return (T)rpcReponse.Result;
+            return (T)result.Data;
         }
 
         void WaitConnect()

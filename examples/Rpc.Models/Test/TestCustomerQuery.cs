@@ -7,7 +7,7 @@
         public int Id { get; set; }
     }
 
-    public class CustomerInfo
+    public class CustomerInfo : IMessage
     {
         public int Id { get; set; }
 

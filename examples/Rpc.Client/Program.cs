@@ -28,7 +28,7 @@ namespace Rpc.Client
                 while (true)
                 {
                     Test();
-                    //Console.ReadLine();
+                    Console.ReadLine();
                 }
             }
             catch (Exception ex)
@@ -45,7 +45,7 @@ namespace Rpc.Client
 
             var sw = new Stopwatch();
             sw.Start();
-            int count = 10000;
+            int count = 1;
             var cde = new CountdownEvent(count);
             for (int i = 0; i < count; i++)
             {

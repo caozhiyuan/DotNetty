@@ -3,7 +3,6 @@
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Codecs;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Rpc.Protocol;
@@ -16,30 +15,33 @@
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            var request = (RpcRequest) message;
+            var request = (RpcMessage) message;
             Task.Factory.StartNew(
                 async o =>
                 {
-                    var state = (Tuple<IChannelHandlerContext, RpcRequest>) o;
-                    var rpcResponse = new RpcResponse
+                    var state = (Tuple<IChannelHandlerContext, RpcMessage>) o;
+                    var rpcResponse = new RpcMessage
                     {
-                        RequestId = state.Item2.RequestId
+                        RequestId = state.Item2.RequestId,
+                        MessageType = (byte)MessageType.Response
                     };
 
                     if (request.RequestId == "-1")
                     {
-                        rpcResponse.Result = "pong";
+                        rpcResponse.Message = new Pong();
                     }
                     else
                     {
+                        var res = new Result();
                         try
                         {
-                            rpcResponse.Result = await ServiceBus.Instance.Publish(state.Item2.Message);
+                            res.Data = await ServiceBus.Instance.Publish(state.Item2.Message);
                         }
                         catch (Exception ex)
                         {
-                            rpcResponse.Error = ex.Message;
+                            res.Error = ex.Message;
                         }
+                        rpcResponse.Message = res;
                     }
 
                     IChannelHandlerContext ctx = state.Item1;
@@ -57,7 +59,7 @@
         /// <param name="ctx"></param>
         /// <param name="rpcResponse"></param>
         /// <returns></returns>
-        static void WriteAndFlushAsync(IChannelHandlerContext ctx, RpcResponse rpcResponse)
+        static void WriteAndFlushAsync(IChannelHandlerContext ctx, RpcMessage rpcResponse)
         {
             ctx.WriteAndFlushAsync(rpcResponse);
         }

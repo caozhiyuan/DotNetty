@@ -7,7 +7,7 @@
 
     }
 
-    public class AddressInfo
+    public class AddressInfo: IMessage
     {
 
     }
