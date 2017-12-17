@@ -22,8 +22,7 @@
                     var state = (Tuple<IChannelHandlerContext, RpcMessage>) o;
                     var rpcResponse = new RpcMessage
                     {
-                        RequestId = state.Item2.RequestId,
-                        MessageType = (byte)MessageType.Response
+                        RequestId = state.Item2.RequestId
                     };
 
                     if (request.RequestId == "-1")

@@ -69,7 +69,6 @@ namespace DotNetty.Rpc.Client
             var rpcRequest = new RpcMessage
             {
                 RequestId = this.RequestId.ToString(),
-                MessageType = (byte)MessageType.Request,
                 Message = request
             };
             var rpcReponse = await this.clientRpcHandler.SendRequest(rpcRequest, timeout);

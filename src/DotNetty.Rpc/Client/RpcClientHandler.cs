@@ -116,8 +116,7 @@
                     context.WriteAndFlushAsync(new RpcMessage
                     {
                         RequestId = "-1",
-                        Message = new Ping(),
-                        MessageType = (byte)MessageType.Request
+                        Message = new Ping()
                     });
                 }
             }

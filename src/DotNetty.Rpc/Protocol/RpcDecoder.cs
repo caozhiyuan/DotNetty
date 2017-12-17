@@ -48,11 +48,10 @@
             string[] headers = headerStr.Split('$');
             var rpcMessage = new RpcMessage
             {
-                RequestId = headers[0],
-                MessageType = Convert.ToByte(headers[1])
+                RequestId = headers[0]
             };
 
-            string messageId = headers[2];
+            string messageId = headers[1];
             if (this.messageTypes.TryGetValue(messageId, out Type type))
             {
                 byte[] message;
