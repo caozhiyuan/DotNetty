@@ -45,7 +45,7 @@ namespace Rpc.Client
 
             var sw = new Stopwatch();
             sw.Start();
-            int count = 1;
+            int count = 10000;
             var cde = new CountdownEvent(count);
             for (int i = 0; i < count; i++)
             {
