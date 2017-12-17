@@ -1,5 +1,6 @@
 ﻿namespace DotNetty.Rpc.Protocol
 {
+    using System;
     using System.Collections.Generic;
     using System.Text;
     using DotNetty.Buffers;
@@ -10,6 +11,9 @@
     {
         protected override void Encode(IChannelHandlerContext context, RpcMessage input, List<object> output)
         {
+            Type msgType = input.Message.GetType();
+
+            input.MessageId = msgType.FullName;
             string headerStr = $"{input.RequestId}${input.MessageType}${input.MessageId}";
             IByteBuffer header = ByteBufferUtil.EncodeString(context.Allocator,
                 headerStr,
@@ -17,8 +21,9 @@
 
             int headLength = header.ReadableBytes;
 
-            IByteBuffer message = ByteBufferUtil.EncodeString(context.Allocator,
-                SerializationUtil.Serialize(input.Message),
+            IByteBuffer message = ByteBufferUtil.EncodeString(
+                context.Allocator,
+                SerializationUtil.MessageSerialize(input.Message, msgType),
                 Encoding.UTF8);
 
             int messageLength = message.ReadableBytes;

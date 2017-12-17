@@ -8,13 +8,7 @@
 
         public byte MessageType { get; set; }
 
-        public string MessageId
-        {
-            get
-            {
-                return this.Message.GetType().FullName;
-            }
-        }
+        public string MessageId { get; set; }
 
         public IMessage Message { get; set; }
     }

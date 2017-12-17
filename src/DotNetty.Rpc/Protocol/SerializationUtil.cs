@@ -14,28 +14,28 @@
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore
         };
 
-        public static string Serialize(IMessage obj)
+        public static string MessageSerialize(IMessage obj, Type type)
         {
             JsonSerializer jsonSerializer = JsonSerializer.Create(DefaultJsonSerializerSetting);
             var stringWriter = new StringWriter(new StringBuilder(), CultureInfo.InvariantCulture);
             using (var jsonTextWriter = new JsonTextWriter(stringWriter))
             {
                 jsonTextWriter.Formatting = jsonSerializer.Formatting;
-                jsonSerializer.Serialize(jsonTextWriter, obj, obj.GetType());
+                jsonSerializer.Serialize(jsonTextWriter, obj, type);
             }
             return stringWriter.ToString();
         }
 
-        public static T Deserialize<T>(byte[] data, Type type)
+        public static IMessage MessageDeserialize(byte[] data, Type type)
         {
             try
             {
                 string s = Encoding.UTF8.GetString(data);
-                return (T)JsonConvert.DeserializeObject(s, type, DefaultJsonSerializerSetting);
+                return (IMessage)JsonConvert.DeserializeObject(s, type, DefaultJsonSerializerSetting);
             }
             catch
             {
-                return default(T);
+                return default(IMessage);
             }
         }
     }

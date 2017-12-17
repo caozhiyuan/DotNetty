@@ -61,7 +61,7 @@
                     input.ReadBytes(ms, dataLength - headerLen - 4);
                     message = ms.ToArray();
                 }
-                rpcMessage.Message = SerializationUtil.Deserialize<IMessage>(message, type);
+                rpcMessage.Message = SerializationUtil.MessageDeserialize(message, type);
             }
             else
             {
