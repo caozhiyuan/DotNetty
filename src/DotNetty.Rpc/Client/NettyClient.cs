@@ -71,7 +71,7 @@ namespace DotNetty.Rpc.Client
                 RequestId = this.RequestId.ToString(),
                 Message = request
             };
-            var rpcReponse = await this.clientRpcHandler.SendRequest(rpcRequest, timeout);
+            RpcMessage rpcReponse = await this.clientRpcHandler.SendRequest(rpcRequest, timeout);
             var result = (Result)rpcReponse.Message;
             if (result.Error != null)
             {
