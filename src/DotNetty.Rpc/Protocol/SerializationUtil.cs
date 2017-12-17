@@ -31,11 +31,5 @@
             string s = Encoding.UTF8.GetString(data);
             return JsonConvert.DeserializeObject<T>(s, DefaultJsonSerializerSetting);
         }
-
-        public static JObject SafeDeserialize(byte[] data)
-        {
-            string s = Encoding.UTF8.GetString(data);
-            return (JObject)JsonConvert.DeserializeObject(s);
-        }
     }
 }

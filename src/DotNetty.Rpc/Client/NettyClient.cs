@@ -55,7 +55,7 @@ namespace DotNetty.Rpc.Client
             get { return Interlocked.Increment(ref this.requestId); }
         }
 
-        public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000) where T : IResult
+        public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000) where T : new()
         {
             this.WaitConnect();
 

@@ -7,7 +7,7 @@
 
     }
 
-    public class AddressInfo : IResult
+    public class AddressInfo
     {
 
     }

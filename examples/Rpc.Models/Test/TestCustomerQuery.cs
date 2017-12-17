@@ -7,7 +7,7 @@
         public int Id { get; set; }
     }
 
-    public class CustomerInfo : IResult
+    public class CustomerInfo
     {
         public int Id { get; set; }
 

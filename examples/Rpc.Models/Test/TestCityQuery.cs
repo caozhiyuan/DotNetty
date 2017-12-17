@@ -7,7 +7,7 @@
         public  int Id { get; set; }
     }
 
-    public class CityInfo : IResult
+    public class CityInfo
     {
         public int Id { get; set; }
 

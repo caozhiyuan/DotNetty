@@ -11,8 +11,9 @@
 
         protected override void Encode(IChannelHandlerContext context, T input, List<object> output)
         {
+            string messageStr = SerializationUtil.Serialize(input);
             IByteBuffer message = ByteBufferUtil.EncodeString(context.Allocator,
-                SerializationUtil.Serialize(input),
+                messageStr,
                 Encoding.UTF8);
 
             int length = message.ReadableBytes;

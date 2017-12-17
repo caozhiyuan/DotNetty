@@ -2,13 +2,13 @@
 {
 
     public abstract class AbsMessage<T> : IMessage<T>
-        where T : IResult
+        where T : new()
     {
         public T ReturnValue { get; set; }
     }
 
     public interface IMessage<T>: IMessage
-        where T : IResult
+        where T : new()
     {
         T ReturnValue { get; set; }
     }
@@ -16,10 +16,5 @@
     public interface IMessage
     {
       
-    }
-
-    public interface IResult
-    {
-
     }
 }
