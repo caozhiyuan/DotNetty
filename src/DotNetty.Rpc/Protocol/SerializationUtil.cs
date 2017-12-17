@@ -26,12 +26,11 @@
             return stringWriter.ToString();
         }
 
-        public static IMessage MessageDeserialize(byte[] data, Type type)
+        public static IMessage MessageDeserialize(string str, Type type)
         {
             try
             {
-                string s = Encoding.UTF8.GetString(data);
-                return (IMessage)JsonConvert.DeserializeObject(s, type, DefaultJsonSerializerSetting);
+                return (IMessage)JsonConvert.DeserializeObject(str, type, DefaultJsonSerializerSetting);
             }
             catch
             {

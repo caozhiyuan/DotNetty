@@ -37,13 +37,9 @@
 
             int headerLen = input.ReadInt();
 
-            byte[] header;
-            using (var ms = new MemoryStream())
-            {
-                input.ReadBytes(ms, headerLen);
-                header = ms.ToArray();
-            }
-            string headerStr = Encoding.UTF8.GetString(header);
+            string headerStr = input.ToString(input.ReaderIndex, headerLen, Encoding.UTF8);
+
+            input.SetReaderIndex(input.ReaderIndex + headerLen);
 
             string[] headers = headerStr.Split('$');
             var rpcMessage = new RpcMessage
@@ -54,13 +50,11 @@
             string messageId = headers[1];
             if (this.messageTypes.TryGetValue(messageId, out Type type))
             {
-                byte[] message;
-                using (var ms = new MemoryStream())
-                {
-                    input.ReadBytes(ms, dataLength - headerLen - 4);
-                    message = ms.ToArray();
-                }
-                rpcMessage.Message = SerializationUtil.MessageDeserialize(message, type);
+                int msgLen = dataLength - headerLen - 4;
+                string str = input.ToString(input.ReaderIndex, msgLen, Encoding.UTF8);
+                input.SetReaderIndex(input.ReaderIndex + msgLen);
+
+                rpcMessage.Message = SerializationUtil.MessageDeserialize(str, type);
             }
             else
             {
