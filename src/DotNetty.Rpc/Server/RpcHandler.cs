@@ -34,7 +34,15 @@
                         var res = new Result();
                         try
                         {
-                            res.Data = await ServiceBus.Instance.Publish(state.Item2.Message);
+                            IMessage rpcRequest = state.Item2.Message;
+                            if (rpcRequest == null)
+                            {
+                                res.Error = "404";
+                            }
+                            else
+                            {
+                                res.Data = await ServiceBus.Instance.Publish(rpcRequest);
+                            }
                         }
                         catch (Exception ex)
                         {
