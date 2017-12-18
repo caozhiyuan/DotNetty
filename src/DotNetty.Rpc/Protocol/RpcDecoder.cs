@@ -46,7 +46,8 @@
                 RequestId = headers[0]
             };
 
-            string messageId = headers[1];
+            string messageId = headers[1] ?? string.Empty;
+            rpcMessage.MessageId = messageId;
             if (this.messageTypes.TryGetValue(messageId, out Type type))
             {
                 int msgLen = dataLength - headerLen - 4;
