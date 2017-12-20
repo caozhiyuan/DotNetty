@@ -45,7 +45,7 @@
         {
             var response = (RpcMessage)message;
             string requestId = response.RequestId;
-            if (requestId == "-1")
+            if (requestId == "ping")
             {
                 if (Logger.DebugEnabled)
                 {
@@ -115,7 +115,7 @@
 
                     context.WriteAndFlushAsync(new RpcMessage
                     {
-                        RequestId = "-1",
+                        RequestId = "ping",
                         Message = new Ping()
                     });
                 }

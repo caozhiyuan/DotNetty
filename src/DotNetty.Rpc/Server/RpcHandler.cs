@@ -25,7 +25,7 @@
                         RequestId = state.Item2.RequestId
                     };
 
-                    if (request.RequestId == "-1")
+                    if (request.RequestId == "ping")
                     {
                         rpcResponse.Message = new Pong();
                     }
