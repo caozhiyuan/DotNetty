@@ -20,39 +20,52 @@
                 async o =>
                 {
                     var state = (Tuple<IChannelHandlerContext, RpcMessage>) o;
-                    var rpcResponse = new RpcMessage
-                    {
-                        RequestId = state.Item2.RequestId
-                    };
-
-                    if (request.RequestId == "ping")
-                    {
-                        rpcResponse.Message = new Pong();
-                    }
-                    else
-                    {
-                        var res = new Result();
-                        try
-                        {
-                            IMessage rpcRequest = state.Item2.Message;
-                            if (rpcRequest == null)
-                            {
-                                res.Error = "404";
-                            }
-                            else
-                            {
-                                res.Data = await ServiceBus.Instance.Publish(rpcRequest);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            res.Error = ex.Message;
-                        }
-                        rpcResponse.Message = res;
-                    }
-
                     IChannelHandlerContext ctx = state.Item1;
-                    WriteAndFlushAsync(ctx, rpcResponse);
+                    RpcMessage req = state.Item2;
+                    if (!string.IsNullOrEmpty(req.RequestId))
+                    {
+                        var rpcResponse = new RpcMessage
+                        {
+                            RequestId = req.RequestId
+                        };
+                        if (!req.RequestId.StartsWith("#"))
+                        {
+                            var res = new Result();
+                            try
+                            {
+                                IMessage rpcRequest = state.Item2.Message;
+                                if (rpcRequest == null)
+                                {
+                                    res.Error = "404";
+                                }
+                                else
+                                {
+                                    res.Data = await ServiceBus.Instance.Publish(rpcRequest);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                res.Error = ex.Message;
+                            }
+                            rpcResponse.Message = res;
+                            WriteAndFlushAsync(ctx, rpcResponse);
+                        }
+                        else
+                        {
+                            if (req.RequestId == "#ping")
+                            {
+                                rpcResponse.Message = new Pong();
+                                WriteAndFlushAsync(ctx, rpcResponse);
+                            }
+                            else if (req.RequestId == "#sping")
+                            {
+                                if (Logger.DebugEnabled)
+                                {
+                                    Logger.Debug("get client response pong");
+                                }
+                            }
+                        }
+                    }
                 },
                 Tuple.Create(context, request),
                 default(CancellationToken),
@@ -80,7 +93,7 @@
                 {
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug("ReaderIdle context.CloseAsync");
+                        Logger.Debug("WriterIdle context.CloseAsync");
                     }
                     context.CloseAsync();
                 }
@@ -88,9 +101,14 @@
                 {
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug("WriterIdle context.CloseAsync");
+                        Logger.Debug("WriterIdle send sping request ");
                     }
-                    context.CloseAsync();
+
+                    context.WriteAndFlushAsync(new RpcMessage
+                    {
+                        RequestId = "#sping",
+                        Message = new Ping()
+                    });
                 }
             }
         }

@@ -45,12 +45,25 @@
         {
             var response = (RpcMessage)message;
             string requestId = response.RequestId;
-            if (requestId == "ping")
+            if (requestId == "#ping")
             {
                 if (Logger.DebugEnabled)
                 {
-                    Logger.Debug("get server response pong");
+                    Logger.Debug("get server ping response ");
                 }
+            }
+            else if (requestId == "#sping")
+            {
+                if (Logger.DebugEnabled)
+                {
+                    Logger.Debug("get server sping request ");
+                }
+
+                ctx.WriteAndFlushAsync(new RpcMessage
+                {
+                    RequestId = "#sping",
+                    Message = new Pong()
+                });
             }
             else
             {
@@ -110,12 +123,12 @@
                 {
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug("WriterIdle send request ping");
+                        Logger.Debug("WriterIdle send ping request ");
                     }
 
                     context.WriteAndFlushAsync(new RpcMessage
                     {
-                        RequestId = "ping",
+                        RequestId = "#ping",
                         Message = new Ping()
                     });
                 }
