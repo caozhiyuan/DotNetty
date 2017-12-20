@@ -22,11 +22,13 @@
                     var state = (Tuple<IChannelHandlerContext, RpcMessage>) o;
                     IChannelHandlerContext ctx = state.Item1;
                     RpcMessage req = state.Item2;
-                    if (!string.IsNullOrEmpty(req.RequestId))
+                    req.RequestId = req.RequestId ?? string.Empty;
+                    if (req.Type == (byte)RpcMessageType.Req)
                     {
                         var rpcResponse = new RpcMessage
                         {
-                            RequestId = req.RequestId
+                            RequestId = req.RequestId,
+                            Type = (byte)RpcMessageType.Res
                         };
                         if (!req.RequestId.StartsWith("#"))
                         {
@@ -48,21 +50,23 @@
                                 res.Error = ex.Message;
                             }
                             rpcResponse.Message = res;
-                            WriteAndFlushAsync(ctx, rpcResponse);
                         }
                         else
                         {
                             if (req.RequestId == "#ping")
                             {
                                 rpcResponse.Message = new Pong();
-                                WriteAndFlushAsync(ctx, rpcResponse);
                             }
-                            else if (req.RequestId == "#sping")
+                        }
+                        WriteAndFlushAsync(ctx, rpcResponse);
+                    }
+                    else
+                    {
+                        if (req.RequestId == "#ping")
+                        {
+                            if (Logger.DebugEnabled)
                             {
-                                if (Logger.DebugEnabled)
-                                {
-                                    Logger.Debug("get client sping response");
-                                }
+                                Logger.Debug("get client ping response");
                             }
                         }
                     }
@@ -101,12 +105,12 @@
                 {
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug("WriterIdle send sping request ");
+                        Logger.Debug("WriterIdle send ping request ");
                     }
 
                     context.WriteAndFlushAsync(new RpcMessage
                     {
-                        RequestId = "#sping",
+                        RequestId = "#ping",
                         Message = new Ping()
                     });
                 }

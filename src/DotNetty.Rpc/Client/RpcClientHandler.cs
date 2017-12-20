@@ -43,37 +43,49 @@
 
         public override void ChannelRead(IChannelHandlerContext ctx, object message)
         {
-            var response = (RpcMessage)message;
-            string requestId = response.RequestId;
-            if (requestId == "#ping")
+            var rpcMessage = (RpcMessage)message;
+            rpcMessage.RequestId = rpcMessage.RequestId ?? string.Empty;
+            string requestId = rpcMessage.RequestId;
+            if (rpcMessage.Type == (byte)RpcMessageType.Res)
             {
-                if (Logger.DebugEnabled)
+                if (!requestId.StartsWith("#"))
                 {
-                    Logger.Debug("get server ping response ");
+                    RequestContext requestContext;
+                    this.pendingRpc.TryGetValue(requestId, out requestContext);
+                    if (requestContext != null)
+                    {
+                        this.pendingRpc.TryRemove(requestId, out requestContext);
+                        requestContext.TaskCompletionSource.SetResult(rpcMessage);
+                        requestContext.TimeOutTimer.Cancel();
+                    }
+                }         
+                else
+                {
+                    if (requestId == "#ping")
+                    {
+                        if (Logger.DebugEnabled)
+                        {
+                            Logger.Debug("get server ping response ");
+                        }
+                    }
                 }
-            }
-            else if (requestId == "#sping")
-            {
-                if (Logger.DebugEnabled)
-                {
-                    Logger.Debug("get server sping request ");
-                }
-
-                ctx.WriteAndFlushAsync(new RpcMessage
-                {
-                    RequestId = "#sping",
-                    Message = new Pong()
-                });
             }
             else
             {
-                RequestContext requestContext;
-                this.pendingRpc.TryGetValue(requestId, out requestContext);
-                if (requestContext != null)
+                if (requestId == "#ping")
                 {
-                    this.pendingRpc.TryRemove(requestId, out requestContext);
-                    requestContext.TaskCompletionSource.SetResult(response);
-                    requestContext.TimeOutTimer.Cancel();
+                    if (Logger.DebugEnabled)
+                    {
+                        Logger.Debug("get server ping request ");
+                    }
+
+                    ctx.WriteAndFlushAsync(
+                        new RpcMessage
+                        {
+                            RequestId = "#ping",
+                            Type = (byte)RpcMessageType.Res,
+                            Message = new Pong()
+                        });
                 }
             }
         }

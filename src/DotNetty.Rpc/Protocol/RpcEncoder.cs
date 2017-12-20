@@ -14,7 +14,7 @@
             Type msgType = input.Message.GetType();
 
             input.MessageId = msgType.FullName;
-            string headerStr = $"{input.RequestId}${input.MessageId}";
+            string headerStr = $"{input.RequestId}${input.MessageId}${input.Type}";
             IByteBuffer header = ByteBufferUtil.EncodeString(context.Allocator,
                 headerStr,
                 Encoding.UTF8);

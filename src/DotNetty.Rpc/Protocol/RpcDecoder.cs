@@ -61,6 +61,9 @@
                 rpcMessage.Message = default(IMessage);
             }
 
+            byte messageType = Convert.ToByte(headers[2]);
+            rpcMessage.Type = messageType;
+
             output.Add(rpcMessage);
         }
     }
