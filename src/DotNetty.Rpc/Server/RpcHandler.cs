@@ -61,7 +61,7 @@
                             {
                                 if (Logger.DebugEnabled)
                                 {
-                                    Logger.Debug("get client response pong");
+                                    Logger.Debug("get client sping response");
                                 }
                             }
                         }
