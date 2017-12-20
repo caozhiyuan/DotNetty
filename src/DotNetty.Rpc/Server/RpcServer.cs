@@ -44,7 +44,7 @@
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
-                        pipeline.AddLast(new IdleStateHandler(720, 360, 0));
+                        pipeline.AddLast(new IdleStateHandler(180, 120, 0));
                         pipeline.AddLast(new LengthFieldBasedFrameDecoder(int.MaxValue, 0, 4, 0, 0));
                         pipeline.AddLast(new RpcDecoder(messageTypes));
                         pipeline.AddLast(new RpcEncoder());
