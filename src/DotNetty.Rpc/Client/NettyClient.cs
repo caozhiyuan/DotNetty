@@ -8,7 +8,6 @@ namespace DotNetty.Rpc.Client
     using System.Threading;
     using DotNetty.Codecs;
     using DotNetty.Common.Internal.Logging;
-    using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Rpc.Protocol;
     using DotNetty.Rpc.Service;
@@ -27,7 +26,6 @@ namespace DotNetty.Rpc.Client
         private readonly ManualResetEventSlim emptyEvent = new ManualResetEventSlim(false, 1);
         private Bootstrap bootstrap;
         private RpcClientHandler clientRpcHandler;
-        private volatile bool closed = false;
 
         internal void Connect(EndPoint socketAddress)
         {
@@ -122,17 +120,6 @@ namespace DotNetty.Rpc.Client
 					this.emptyEvent.Set();
                 }
             }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-        }
-
-        public bool IsClosed => this.closed;
-
-        public void Close()
-        {
-            this.WaitConnect();
-
-            this.closed = true;
-            IChannel channel0 = this.clientRpcHandler.GetChannel();
-            channel0.CloseAsync();
         }
     }
 }

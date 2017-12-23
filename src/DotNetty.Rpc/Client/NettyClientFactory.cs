@@ -10,38 +10,23 @@
 
         public static NettyClient Get(string serverAddress)
         {
-            Lazy<NettyClient> oldlazyClient;
-            if (ServiceClientMap.TryGetValue(serverAddress, out oldlazyClient))
-            {
-                NettyClient client = oldlazyClient.Value;
-                if (!client.IsClosed)
-                {
-                    return client;
-                }
-            }
-
-            var newlazyClient = new Lazy<NettyClient>(() =>
-            {
-                var nettyClient = new NettyClient();
-                string[] array = serverAddress.Split(':');
-                string host = array[0];
-                int port = Convert.ToInt32(array[1]);
-                EndPoint remotePeer = new IPEndPoint(IPAddress.Parse(host).MapToIPv6(), port);
-                nettyClient.Connect(remotePeer);
-                return nettyClient;
-            });
-
-            if (oldlazyClient == null)
-            {
-                ServiceClientMap.TryAdd(serverAddress, newlazyClient);
-            }
-            else
-            {
-                ServiceClientMap.TryUpdate(serverAddress, newlazyClient, oldlazyClient);
-            }
-            return newlazyClient.Value;
+            Lazy<NettyClient> lazyClient = ServiceClientMap.GetOrAdd(serverAddress, GetLazyNettyClient);
+            return lazyClient.Value;
         }
 
-        public static bool Exist(string serverAddress) => ServiceClientMap.ContainsKey(serverAddress);
+        static Lazy<NettyClient> GetLazyNettyClient(string serverAddress)
+        {
+            return new Lazy<NettyClient>(
+                () =>
+                {
+                    var nettyClient = new NettyClient();
+                    string[] array = serverAddress.Split(':');
+                    string host = array[0];
+                    int port = Convert.ToInt32(array[1]);
+                    EndPoint remotePeer = new IPEndPoint(IPAddress.Parse(host).MapToIPv6(), port);
+                    nettyClient.Connect(remotePeer);
+                    return nettyClient;
+                });
+        }
     }
 }
