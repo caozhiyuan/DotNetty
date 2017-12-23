@@ -8,10 +8,7 @@ namespace Rpc.Client
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Rpc.Client;
     using Microsoft.Extensions.Logging.Console;
-    using Newtonsoft.Json;
-    using Rpc.Models;
     using Rpc.Models.Test;
-    using DotNetty.Handlers;
 
     public class Program
     {
@@ -27,7 +24,30 @@ namespace Rpc.Client
             {
                 while (true)
                 {
-                    Test();
+                    int threadNum = 16;
+                    int requestNum = 10000;
+                    var sw = new Stopwatch();
+                    sw.Start();
+
+                    var threads = new Thread[threadNum];
+                    for (int i = 0; i < threadNum; ++i)
+                    {
+                        threads[i] = new Thread(Test)
+                        {
+                            IsBackground = true
+                        }; 
+                        threads[i].Start(requestNum);
+                    }
+
+                    foreach (Thread t in threads)
+                    {
+                        t.Join();
+                    }
+
+                    sw.Stop();
+                    long timeCost = sw.ElapsedMilliseconds;
+                    string msg = string.Format("Async call total-time-cost:{0}ms, req/s={1}", timeCost, ((double)(requestNum * threadNum)) / timeCost * 1000);
+                    Console.WriteLine(msg);
                 }
             }
             catch (Exception ex)
@@ -37,14 +57,11 @@ namespace Rpc.Client
             Console.ReadKey();
         }
 
-
-        public static void Test()
+        static void Test(object obj)
         {
+            int count = Convert.ToInt32(obj);
             string serverAddress = "10.1.4.204:9008";
 
-            var sw = new Stopwatch();
-            sw.Start();
-            int count = 10000;
             var cde = new CountdownEvent(count);
             for (int i = 0; i < count; i++)
             {
@@ -65,8 +82,6 @@ namespace Rpc.Client
             }
 
             cde.Wait();
-            sw.Stop();
-            Console.WriteLine(sw.ElapsedMilliseconds);
         }
     }
 }
