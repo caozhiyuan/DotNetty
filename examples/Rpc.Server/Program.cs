@@ -11,8 +11,6 @@ namespace Rpc.Server
     {
         public static void Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("io.netty.leakDetection.level", "Disabled");
-
             InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider((s, level) => true, false));
 
             string serverAddress = "0.0.0.0:9008";

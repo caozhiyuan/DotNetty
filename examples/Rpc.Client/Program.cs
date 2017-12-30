@@ -16,15 +16,15 @@ namespace Rpc.Client
 
         public static void Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("io.netty.leakDetection.level", "Disabled");
-
             InternalLoggerFactory.DefaultFactory.AddProvider(new ConsoleLoggerProvider((s, level) => true, false));
 
             try
             {
+                Test(10);
+
                 while (true)
                 {
-                    int threadNum = 16;
+                    int threadNum = 4;
                     int requestNum = 10000;
                     var sw = new Stopwatch();
                     sw.Start();
