@@ -5,12 +5,10 @@ namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Net;
     using System.Net.Sockets;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
-    using DotNetty.Common;
     using DotNetty.Common.Concurrency;
 
     /// <summary>
@@ -245,7 +243,7 @@ namespace DotNetty.Transport.Channels.Sockets
         //{
         //    long position = region.transfered();
         //    return region.transferTo(javaChannel(), position);
-        //}      
+        //}
 
         protected override void DoWrite(ChannelOutboundBuffer input)
         {

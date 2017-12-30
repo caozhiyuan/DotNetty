@@ -329,12 +329,14 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
                 }
+
                 return pending;
             }
             else
             {
                 // Schedule flush again later so other tasks can be picked up input the meantime
                 this.EventLoop.Execute(FlushAction, this);
+
                 return true;
             }
         }
