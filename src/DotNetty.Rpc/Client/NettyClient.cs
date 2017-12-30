@@ -75,6 +75,10 @@ namespace DotNetty.Rpc.Client
             {
                 throw new Exception(result.Error);
             }
+            if (result.Data == null)
+            {
+                return default(T);
+            }
             return ((JObject)result.Data).ToObject<T>();
         }
 
