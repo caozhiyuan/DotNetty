@@ -1,8 +1,5 @@
 ﻿namespace DotNetty.Rpc.Protocol
 {
-    using DotNetty.Rpc.Service;
-    using Newtonsoft.Json;
-
     public class RpcMessage
     {
         public int RequestId { get; set; }
