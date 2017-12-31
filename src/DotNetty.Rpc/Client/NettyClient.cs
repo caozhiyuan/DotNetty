@@ -28,8 +28,6 @@ namespace DotNetty.Rpc.Client
 
         internal void Connect(EndPoint socketAddress)
         {
-            ConcurrentDictionary<string, Type> messageTypes = Registrations.MessageTypes;
-
             this.bootstrap = new Bootstrap();
             this.bootstrap.Group(WorkerGroup)
                 .Channel<TcpSocketChannel>()
