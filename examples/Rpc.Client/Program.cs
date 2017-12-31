@@ -21,12 +21,10 @@ namespace Rpc.Client
             try
             {
                 Test(1);
-
-                Console.ReadLine();
-
+                
                 while (true)
                 {
-                    int threadNum = 8;
+                    int threadNum = 1;
                     int requestNum = 10000;
                     var sw = new Stopwatch();
                     sw.Start();
