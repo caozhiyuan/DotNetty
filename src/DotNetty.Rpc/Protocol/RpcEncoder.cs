@@ -11,8 +11,15 @@
     {
         protected override void Encode(IChannelHandlerContext context, RpcMessage input, List<object> output)
         {
-            Type msgType = input.Message.GetType();
-            input.MessageId = msgType.FullName;
+            if (input.Message == null)
+            {
+                input.MessageId = string.Empty;
+            }
+            else
+            {
+                Type msgType = input.Message.GetType();
+                input.MessageId = msgType.FullName;
+            }
 
             byte[] midBytes = Encoding.UTF8.GetBytes(input.MessageId);
             int midLen = midBytes.Length;
@@ -42,9 +49,11 @@
 
             int messageLength = message.ReadableBytes;
 
-            output.Add(context.Allocator.Buffer(4).WriteInt(2 + headLength + messageLength));
+            IByteBuffer lenBuffer = context.Allocator.Buffer(6);
+            lenBuffer.WriteInt(2 + headLength + messageLength);
+            lenBuffer.WriteShort(headLength);
 
-            output.Add(context.Allocator.Buffer(2).WriteShort(headLength));
+            output.Add(lenBuffer);
 
             output.Add(headerBuffer);
 

@@ -16,7 +16,11 @@
 
         private Task<TestAddressQuery> Handler(TestAddressQuery eventData)
         {
-            throw new NotImplementedException();
+            eventData.ReturnValue = new TestAddressQuery()
+            {
+                Id = eventData.Id
+            };
+            return Task.FromResult(eventData);
         }
 
         private Task<TestCityQuery> Handler(TestCityQuery eventData)

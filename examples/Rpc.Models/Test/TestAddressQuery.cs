@@ -2,13 +2,8 @@
 {
     using DotNetty.Rpc.Service;
 
-    public class TestAddressQuery : AbsMessage<AddressInfo>
+    public class TestAddressQuery : AbsMessage<TestAddressQuery>
     {
-
-    }
-
-    public class AddressInfo: IMessage
-    {
-
+        public int Id { get; set; }
     }
 }

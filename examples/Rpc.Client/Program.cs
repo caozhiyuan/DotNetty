@@ -21,10 +21,12 @@ namespace Rpc.Client
             try
             {
                 Test(1);
-                
+
+                Console.ReadLine();
+
                 while (true)
                 {
-                    int threadNum = 1;
+                    int threadNum = 8;
                     int requestNum = 10000;
                     var sw = new Stopwatch();
                     sw.Start();
@@ -66,11 +68,11 @@ namespace Rpc.Client
             for (int i = 0; i < count; i++)
             {
                 NettyClient client = NettyClientFactory.Get(serverAddress);
-                var query = new TestCityQuery
+                var query = new TestAddressQuery
                 {
                     Id = i
                 };
-                Task<CityInfo> task = client.SendRequest(query);
+                Task<TestAddressQuery> task = client.SendRequest(query);
                 task.ContinueWith(n =>
                 {
                     if (n.IsFaulted)
