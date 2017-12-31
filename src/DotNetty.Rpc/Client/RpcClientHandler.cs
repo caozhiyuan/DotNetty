@@ -9,7 +9,6 @@
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Rpc.Protocol;
-    using DotNetty.Rpc.Service;
     using DotNetty.Transport.Channels;
 
     public class RpcClientHandler : ChannelHandlerAdapter

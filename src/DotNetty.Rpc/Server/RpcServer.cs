@@ -1,10 +1,8 @@
 ﻿namespace DotNetty.Rpc.Server
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Threading.Tasks;
     using DotNetty.Codecs;
-    using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Rpc.Protocol;
     using DotNetty.Rpc.Service;
