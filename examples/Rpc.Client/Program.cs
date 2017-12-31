@@ -20,11 +20,11 @@ namespace Rpc.Client
 
             try
             {
-                Test(10);
-
+                Test(1);
+                
                 while (true)
                 {
-                    int threadNum = 4;
+                    int threadNum = 1;
                     int requestNum = 10000;
                     var sw = new Stopwatch();
                     sw.Start();

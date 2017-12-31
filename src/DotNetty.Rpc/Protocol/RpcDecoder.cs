@@ -34,23 +34,33 @@
                 return;
             }
 
-            int headerLen = input.ReadInt();
+            short headerLen = input.ReadShort();   
+            int requestId = input.ReadInt();
+            byte rpcType = input.ReadByte();
 
-            string headerStr = input.ToString(input.ReaderIndex, headerLen, Encoding.UTF8);
 
-            input.SetReaderIndex(input.ReaderIndex + headerLen);
+            int mIdLen = input.ReadShort();
+            string messageId = input.ToString(input.ReaderIndex, mIdLen, Encoding.UTF8);
+            input.SetReaderIndex(input.ReaderIndex + mIdLen);
 
-            string[] headers = headerStr.Split('$');
+            short errorCode = input.ReadShort();
+            short errorMsgLen = input.ReadShort();
+            string errorMsg = input.ToString(input.ReaderIndex, errorMsgLen, Encoding.UTF8);
+            input.SetReaderIndex(input.ReaderIndex + errorMsgLen);
+
             var rpcMessage = new RpcMessage
             {
-                RequestId = headers[0]
+                RequestId = requestId,
+                Type = rpcType,
+                MessageId = messageId,
+                ErrorCode = errorCode,
+                ErrorMsg = errorMsg
             };
-
-            string messageId = headers[1] ?? string.Empty;
+            
             rpcMessage.MessageId = messageId;
             if (this.messageTypes.TryGetValue(messageId, out Type type))
             {
-                int msgLen = dataLength - headerLen - 4;
+                int msgLen = dataLength - headerLen - 2;
                 string str = input.ToString(input.ReaderIndex, msgLen, Encoding.UTF8);
                 input.SetReaderIndex(input.ReaderIndex + msgLen);
 
@@ -60,9 +70,6 @@
             {
                 rpcMessage.Message = default(IMessage);
             }
-
-            byte messageType = Convert.ToByte(headers[2]);
-            rpcMessage.Type = messageType;
 
             output.Add(rpcMessage);
         }

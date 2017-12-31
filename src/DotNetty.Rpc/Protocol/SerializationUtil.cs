@@ -1,9 +1,6 @@
 ﻿namespace DotNetty.Rpc.Protocol
 {
     using System;
-    using System.Globalization;
-    using System.IO;
-    using System.Text;
     using DotNetty.Rpc.Service;
     using Newtonsoft.Json;
 
@@ -11,19 +8,13 @@
     {
         static readonly JsonSerializerSettings DefaultJsonSerializerSetting = new JsonSerializerSettings
         {
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            NullValueHandling = NullValueHandling.Ignore
         };
 
-        public static string MessageSerialize(IMessage obj, Type type)
+        public static string MessageSerialize(IMessage obj)
         {
-            JsonSerializer jsonSerializer = JsonSerializer.Create(DefaultJsonSerializerSetting);
-            var stringWriter = new StringWriter(new StringBuilder(), CultureInfo.InvariantCulture);
-            using (var jsonTextWriter = new JsonTextWriter(stringWriter))
-            {
-                jsonTextWriter.Formatting = jsonSerializer.Formatting;
-                jsonSerializer.Serialize(jsonTextWriter, obj, type);
-            }
-            return stringWriter.ToString();
+            return JsonConvert.SerializeObject(obj, DefaultJsonSerializerSetting);
         }
 
         public static IMessage MessageDeserialize(string str, Type type)

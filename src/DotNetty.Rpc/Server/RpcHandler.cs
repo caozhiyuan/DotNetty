@@ -22,7 +22,6 @@
                     var state = (Tuple<IChannelHandlerContext, RpcMessage>) o;
                     IChannelHandlerContext ctx = state.Item1;
                     RpcMessage req = state.Item2;
-                    req.RequestId = req.RequestId ?? string.Empty;
                     if (req.Type == (byte)RpcMessageType.Req)
                     {
                         var rpcResponse = new RpcMessage
@@ -30,44 +29,42 @@
                             RequestId = req.RequestId,
                             Type = (byte)RpcMessageType.Res
                         };
-                        if (!req.RequestId.StartsWith("#"))
+                        try
                         {
-                            var res = new Result();
-                            try
+                            IMessage rpcRequest = state.Item2.Message;
+                            if (rpcRequest == null)
                             {
-                                IMessage rpcRequest = state.Item2.Message;
-                                if (rpcRequest == null)
-                                {
-                                    res.Error = "404";
-                                }
-                                else
-                                {
-                                    res.Data = await ServiceBus.Instance.Publish(rpcRequest);
-                                }
+                                rpcResponse.ErrorCode = 404;
+                                rpcResponse.ErrorMsg = "Not Found";
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                res.Error = ex.Message;
-                            }
-                            rpcResponse.Message = res;
-                        }
-                        else
-                        {
-                            if (req.RequestId == "#ping")
-                            {
-                                rpcResponse.Message = new Pong();
+                                rpcResponse.Message = (IMessage)await ServiceBus.Instance.Publish(rpcRequest);
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            rpcResponse.ErrorCode = 500;
+                            rpcResponse.ErrorMsg = ex.Message;
+                        }
+
                         WriteAndFlushAsync(ctx, rpcResponse);
                     }
-                    else
+                    else if (req.Type == (byte)RpcMessageType.PingReq)
                     {
-                        if (req.RequestId == "#ping")
+                        var rpcResponse = new RpcMessage
                         {
-                            if (Logger.DebugEnabled)
-                            {
-                                Logger.Debug("get client ping response");
-                            }
+                            Type = (byte)RpcMessageType.PingRes,
+                            Message = new Pong()
+                        };
+
+                        WriteAndFlushAsync(ctx, rpcResponse);
+                    }
+                    else if (req.Type == (byte)RpcMessageType.PingRes)
+                    {
+                        if (Logger.DebugEnabled)
+                        {
+                            Logger.Debug("get client ping response");
                         }
                     }
                 },
@@ -108,11 +105,12 @@
                         Logger.Debug("WriterIdle send ping request ");
                     }
 
-                    context.WriteAndFlushAsync(new RpcMessage
-                    {
-                        RequestId = "#ping",
-                        Message = new Ping()
-                    });
+                    context.WriteAndFlushAsync(
+                        new RpcMessage
+                        {
+                            Type = (byte)RpcMessageType.PingReq,
+                            Message = new Ping()
+                        });
                 }
             }
         }

@@ -1,21 +1,28 @@
 ﻿namespace DotNetty.Rpc.Protocol
 {
     using DotNetty.Rpc.Service;
+    using Newtonsoft.Json;
 
     public class RpcMessage
     {
-        public string RequestId { get; set; }
+        public int RequestId { get; set; }
+
+        public byte Type { get; set; }
 
         public string MessageId { get; set; }
 
-        public byte Type { get; set; }
+        public short ErrorCode { get; set; }
+
+        public string ErrorMsg { get; set; }
 
         public IMessage Message { get; set; }
     }
 
-    public enum RpcMessageType:byte
+    public enum RpcMessageType : byte
     {
-        Req = 0,
-        Res = 1
+        Req = 1,
+        Res = 2,
+        PingReq = 3,
+        PingRes = 4
     }
 }

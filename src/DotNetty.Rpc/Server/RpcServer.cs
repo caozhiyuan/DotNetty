@@ -14,7 +14,6 @@
 
     public class RpcServer
     {
-        static readonly int Paralle = Math.Max(Environment.ProcessorCount / 2, 2);
         readonly string ipAndPort;
 
         public RpcServer(string ipAndPort)
@@ -31,8 +30,8 @@
             }
             ConcurrentDictionary<string, Type> messageTypes = Registrations.MessageTypes;
 
-            var bossGroup = new MultithreadEventLoopGroup();
-            var workerGroup = new MultithreadEventLoopGroup(Paralle);
+            var bossGroup = new MultithreadEventLoopGroup(1);
+            var workerGroup = new MultithreadEventLoopGroup();
 
             try
             {

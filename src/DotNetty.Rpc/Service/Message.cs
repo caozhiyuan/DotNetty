@@ -23,12 +23,6 @@
 
     public class Pong : IMessage
     {
-    }
 
-    public class Result : IMessage
-    {
-        public object Data { get; set; }
-
-        public string Error { get; set; }
     }
 }

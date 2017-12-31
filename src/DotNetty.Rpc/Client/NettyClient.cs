@@ -19,9 +19,8 @@ namespace DotNetty.Rpc.Client
     public class NettyClient
     {
         const int ConnectTimeout = 10000;
-        static readonly int Paralle = Math.Max(Environment.ProcessorCount / 2, 2);
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance("NettyClient");
-        static readonly IEventLoopGroup WorkerGroup = new MultithreadEventLoopGroup(Paralle);
+        static readonly IEventLoopGroup WorkerGroup = new MultithreadEventLoopGroup();
 
         private readonly ManualResetEventSlim emptyEvent = new ManualResetEventSlim(false, 1);
         private Bootstrap bootstrap;
@@ -53,33 +52,25 @@ namespace DotNetty.Rpc.Client
             this.DoConnect(socketAddress);
         }
 
-        int requestId = 1;
-
-        int RequestId
-        {
-            get { return Interlocked.Increment(ref this.requestId); }
-        }
-
         public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000) where T : IMessage
         {
             this.WaitConnect();
 
             var rpcRequest = new RpcMessage
             {
-                RequestId = this.RequestId.ToString(),
-                Message = request
+                Message = request,
+                Type = (byte)RpcMessageType.Req
             };
             RpcMessage rpcReponse = await this.clientRpcHandler.SendRequest(rpcRequest, timeout);
-            var result = (Result)rpcReponse.Message;
-            if (result.Error != null)
+            if (rpcReponse.ErrorCode > 0)
             {
-                throw new Exception(result.Error);
+                throw new Exception(rpcReponse.ErrorMsg);
             }
-            if (result.Data == null)
+            if (rpcReponse.Message == null)
             {
                 return default(T);
             }
-            return ((JObject)result.Data).ToObject<T>();
+            return (T)rpcReponse.Message;
         }
 
         void WaitConnect()

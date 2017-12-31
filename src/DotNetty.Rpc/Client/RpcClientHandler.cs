@@ -3,8 +3,8 @@
     using System;
     using System.Collections.Concurrent;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
-    using DotNetty.Codecs;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Handlers.Timeout;
@@ -15,13 +15,13 @@
     public class RpcClientHandler : ChannelHandlerAdapter
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance("RpcClientHandler");
-        private readonly ConcurrentDictionary<string, RequestContext> pendingRpc;
+        private readonly ConcurrentDictionary<int, RequestContext> pendingRpc;
         private volatile IChannel channel;
         private EndPoint remotePeer;
 
         public RpcClientHandler()
         {
-            this.pendingRpc = new ConcurrentDictionary<string, RequestContext>();
+            this.pendingRpc = new ConcurrentDictionary<int, RequestContext>();
         }
 
         public IChannel GetChannel() => this.channel;
@@ -44,54 +44,45 @@
         public override void ChannelRead(IChannelHandlerContext ctx, object message)
         {
             var rpcMessage = (RpcMessage)message;
-            rpcMessage.RequestId = rpcMessage.RequestId ?? string.Empty;
-            string requestId = rpcMessage.RequestId;
             if (rpcMessage.Type == (byte)RpcMessageType.Res)
             {
-                if (!requestId.StartsWith("#"))
+                int requestId = rpcMessage.RequestId;
+                RequestContext requestContext;
+                this.pendingRpc.TryGetValue(requestId, out requestContext);
+                if (requestContext != null)
                 {
-                    RequestContext requestContext;
-                    this.pendingRpc.TryGetValue(requestId, out requestContext);
-                    if (requestContext != null)
-                    {
-                        this.pendingRpc.TryRemove(requestId, out requestContext);
-                        requestContext.TaskCompletionSource.SetResult(rpcMessage);
-                        requestContext.TimeOutTimer.Cancel();
-                    }
-                }         
-                else
-                {
-                    if (requestId == "#ping")
-                    {
-                        if (Logger.DebugEnabled)
-                        {
-                            Logger.Debug("get server ping response ");
-                        }
-                    }
+                    this.pendingRpc.TryRemove(requestId, out requestContext);
+                    requestContext.TaskCompletionSource.SetResult(rpcMessage);
+                    requestContext.TimeOutTimer.Cancel();
                 }
             }
-            else
+            else if (rpcMessage.Type == (byte)RpcMessageType.PingReq)
             {
-                if (requestId == "#ping")
+                if (Logger.DebugEnabled)
                 {
-                    if (Logger.DebugEnabled)
-                    {
-                        Logger.Debug("get server ping request ");
-                    }
-
-                    ctx.WriteAndFlushAsync(
-                        new RpcMessage
-                        {
-                            RequestId = "#ping",
-                            Type = (byte)RpcMessageType.Res,
-                            Message = new Pong()
-                        });
+                    Logger.Debug("get server ping request ");
                 }
+
+                ctx.WriteAndFlushAsync(
+                    new RpcMessage
+                    {
+                        Type = (byte)RpcMessageType.PingRes,
+                        Message = new Pong()
+                    });
             }
+        }
+
+        int requestId0;
+
+        int RequestId
+        {
+            get { return Interlocked.Increment(ref this.requestId0); }
         }
 
         public Task<RpcMessage> SendRequest(RpcMessage request, int timeout = 10000)
         {
+            request.RequestId = this.RequestId;
+
             var tcs = new TaskCompletionSource<RpcMessage>();
 
             IScheduledTask timeOutTimer = this.channel.EventLoop.Schedule(n => this.GetRpcResponseTimeOut(n), request, TimeSpan.FromMilliseconds(timeout));
@@ -107,7 +98,7 @@
 
         void GetRpcResponseTimeOut(object n)
         {
-            string requestId = ((RpcMessage)n).RequestId;
+            int requestId = ((RpcMessage)n).RequestId;
             RequestContext requestContext;
             this.pendingRpc.TryGetValue(requestId, out requestContext);
             if (requestContext != null)
@@ -138,11 +129,12 @@
                         Logger.Debug("WriterIdle send ping request ");
                     }
 
-                    context.WriteAndFlushAsync(new RpcMessage
-                    {
-                        RequestId = "#ping",
-                        Message = new Ping()
-                    });
+                    context.WriteAndFlushAsync(
+                        new RpcMessage
+                        {
+                            Type = (byte)RpcMessageType.PingReq,
+                            Message = new Ping()
+                        });
                 }
             }
         }
