@@ -31,7 +31,7 @@
                         };
                         try
                         {
-                            IMessage rpcRequest = state.Item2.Message;
+                            IMessage rpcRequest = req.Message;
                             if (rpcRequest == null)
                             {
                                 rpcResponse.ErrorCode = 404;
