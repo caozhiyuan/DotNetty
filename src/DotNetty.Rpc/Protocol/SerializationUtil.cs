@@ -12,21 +12,14 @@
             NullValueHandling = NullValueHandling.Ignore
         };
 
-        public static string MessageSerialize(IMessage obj)
+        public static string Serialize(object obj)
         {
             return JsonConvert.SerializeObject(obj, DefaultJsonSerializerSetting);
         }
 
-        public static IMessage MessageDeserialize(string str, Type type)
+        public static object Deserialize(string str, Type type)
         {
-            try
-            {
-                return (IMessage)JsonConvert.DeserializeObject(str, type, DefaultJsonSerializerSetting);
-            }
-            catch
-            {
-                return default(IMessage);
-            }
+            return JsonConvert.DeserializeObject(str, type, DefaultJsonSerializerSetting);
         }
     }
 }

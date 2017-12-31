@@ -66,8 +66,7 @@
                 ctx.WriteAndFlushAsync(
                     new RpcMessage
                     {
-                        Type = (byte)RpcMessageType.PingRes,
-                        Message = new Pong()
+                        Type = (byte)RpcMessageType.PingRes
                     });
             }
         }
@@ -132,8 +131,7 @@
                     context.WriteAndFlushAsync(
                         new RpcMessage
                         {
-                            Type = (byte)RpcMessageType.PingReq,
-                            Message = new Ping()
+                            Type = (byte)RpcMessageType.PingReq
                         });
                 }
             }

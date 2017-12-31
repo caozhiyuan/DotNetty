@@ -13,12 +13,8 @@
         {
             if (input.Message == null)
             {
+                input.Message = new[] { (byte)'{', (byte)'}' };
                 input.MessageId = string.Empty;
-            }
-            else
-            {
-                Type msgType = input.Message.GetType();
-                input.MessageId = msgType.FullName;
             }
 
             byte[] midBytes = Encoding.UTF8.GetBytes(input.MessageId);
@@ -42,12 +38,10 @@
             headerBuffer.WriteShort(eMsgLen);
             headerBuffer.WriteBytes(eMsgBytes);
 
-            IByteBuffer message = ByteBufferUtil.EncodeString(
-                context.Allocator,
-                SerializationUtil.MessageSerialize(input.Message),
-                Encoding.UTF8);
-
-            int messageLength = message.ReadableBytes;
+        
+            int messageLength = input.Message.Length;
+            IByteBuffer message = context.Allocator.Buffer(messageLength);
+            message.WriteBytes(input.Message);
 
             IByteBuffer lenBuffer = context.Allocator.Buffer(6);
             lenBuffer.WriteInt(2 + headLength + messageLength);

@@ -15,7 +15,7 @@
 
         public string ErrorMsg { get; set; }
 
-        public IMessage Message { get; set; }
+        public byte[] Message { get; set; }
     }
 
     public enum RpcMessageType : byte

@@ -7,6 +7,7 @@
     using System.Linq;
     using System.Reflection;
     using System.Text.RegularExpressions;
+    using Microsoft.Extensions.DependencyModel;
 
     internal class AssemblyManager 
     {
@@ -46,34 +47,56 @@
 
         protected virtual void LoadMatchingAssemblies()
         {
-            string directoryPath = this.App.BaseDirectory;
-
-            if (!Directory.Exists(directoryPath))
+            var loadedAssemblyNames = this.App.GetAssemblies().Select(a => a.FullName).ToList();
+            var entryAssembly = Assembly.GetEntryAssembly();
+            var context = DependencyContext.Load(entryAssembly);
+            if (context != null)
             {
-                return;
-            }
-
-            string binDirectory = Path.Combine(directoryPath, "bin");
-            if (Directory.Exists(binDirectory))
-            {
-                directoryPath = binDirectory;
-            }
-            
-            List<string> loadedAssemblyNames = this.App.GetAssemblies().Select(a => a.FullName).ToList();
-
-            foreach (string dllPath in Directory.GetFiles(directoryPath, "*.dll"))
-            {
-                try
+                IEnumerable<AssemblyName> assemblyNames = context.RuntimeLibraries.SelectMany(n => n.GetDefaultAssemblyNames(context));
+                foreach (AssemblyName assemblyName in assemblyNames)
                 {
-                    AssemblyName an = AssemblyName.GetAssemblyName(dllPath);
-                    if (this.Matches(an.FullName) && !loadedAssemblyNames.Contains(an.FullName))
+                    try
                     {
-                        this.App.Load(an);
+                        if (this.Matches(assemblyName.FullName) && !loadedAssemblyNames.Contains(assemblyName.FullName))
+                        {
+                            this.App.Load(assemblyName);
+                        }
+                    }
+                    catch (BadImageFormatException ex)
+                    {
+                        Trace.TraceError(ex.ToString());
                     }
                 }
-                catch (BadImageFormatException ex)
+            }
+            else
+            {
+                string directoryPath = this.App.BaseDirectory;
+
+                if (!Directory.Exists(directoryPath))
                 {
-                    Trace.TraceError(ex.ToString());
+                    return;
+                }
+
+                string binDirectory = Path.Combine(directoryPath, "bin");
+                if (Directory.Exists(binDirectory))
+                {
+                    directoryPath = binDirectory;
+                }
+
+                foreach (string dllPath in Directory.GetFiles(directoryPath, "*.dll"))
+                {
+                    try
+                    {
+                        AssemblyName an = AssemblyName.GetAssemblyName(dllPath);
+                        if (this.Matches(an.FullName) && !loadedAssemblyNames.Contains(an.FullName))
+                        {
+                            this.App.Load(an);
+                        }
+                    }
+                    catch (BadImageFormatException ex)
+                    {
+                        Trace.TraceError(ex.ToString());
+                    }
                 }
             }
         }

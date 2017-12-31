@@ -28,7 +28,7 @@
             eventData.ReturnValue = new CityInfo()
             {
                 Id = eventData.Id,
-                Name = @"Hello world"
+                Name = "{\"Id\":1,\"CityId\":1,\"CityFlag\":\"sz\",\"WebApiUrl\":\"https://api1.34580.com/\",\"ImageSiteUrl\":\"http://picpro-sz.34580.com/\",\"CityName\":\"苏州市\"}Hello world"
             };
             return Task.FromResult(eventData);
         }

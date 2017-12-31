@@ -5,6 +5,7 @@ namespace DotNetty.Rpc.Client
 {
     using System.Collections.Concurrent;
     using System.Net;
+    using System.Text;
     using System.Threading;
     using DotNetty.Codecs;
     using DotNetty.Common.Internal.Logging;
@@ -14,6 +15,7 @@ namespace DotNetty.Rpc.Client
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
+    using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
     public class NettyClient
@@ -41,7 +43,7 @@ namespace DotNetty.Rpc.Client
 
                     pipeline.AddLast(new IdleStateHandler(60, 30, 0));
                     pipeline.AddLast(new LengthFieldBasedFrameDecoder(int.MaxValue, 0, 4, 0, 0));
-                    pipeline.AddLast(new RpcDecoder(messageTypes));
+                    pipeline.AddLast(new RpcDecoder());
                     pipeline.AddLast(new RpcEncoder());
 
                     pipeline.AddLast(new ReconnectHandler(this.DoConnect));
@@ -52,14 +54,15 @@ namespace DotNetty.Rpc.Client
             this.DoConnect(socketAddress);
         }
 
-        public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000) where T : IMessage
+        public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000)
         {
             this.WaitConnect();
 
             var rpcRequest = new RpcMessage
             {
-                Message = request,
-                Type = (byte)RpcMessageType.Req
+                Message = Encoding.UTF8.GetBytes(SerializationUtil.Serialize(request)),
+                Type = (byte)RpcMessageType.Req,
+                MessageId = request.GetType().FullName
             };
             RpcMessage rpcReponse = await this.clientRpcHandler.SendRequest(rpcRequest, timeout);
             if (rpcReponse.ErrorCode > 0)
@@ -70,7 +73,7 @@ namespace DotNetty.Rpc.Client
             {
                 return default(T);
             }
-            return (T)rpcReponse.Message;
+            return (T)SerializationUtil.Deserialize(Encoding.UTF8.GetString(rpcReponse.Message), typeof(T));
         }
 
         void WaitConnect()

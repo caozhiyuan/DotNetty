@@ -1,6 +1,8 @@
 ﻿namespace DotNetty.Rpc.Server
 {
     using System;
+    using System.Collections.Concurrent;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Internal.Logging;
@@ -12,6 +14,13 @@
     public class RpcHandler: ChannelHandlerAdapter
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance("RpcHandler");
+
+        readonly ConcurrentDictionary<string, Type> messageTypes;
+
+        public RpcHandler()
+        {
+            this.messageTypes =  Registrations.MessageTypes;
+        }
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
@@ -31,15 +40,19 @@
                         };
                         try
                         {
-                            IMessage rpcRequest = req.Message;
-                            if (rpcRequest == null)
+                            string messageId = req.MessageId;
+                            if (this.messageTypes.TryGetValue(messageId, out Type type))
                             {
-                                rpcResponse.ErrorCode = 404;
-                                rpcResponse.ErrorMsg = "Not Found";
+                                object rpcRequest = SerializationUtil.Deserialize(Encoding.UTF8.GetString(req.Message), type);
+                                object msg = await ServiceBus.Instance.Publish(rpcRequest);
+                                string str = SerializationUtil.Serialize(msg);
+                                rpcResponse.Message = Encoding.UTF8.GetBytes(str);
+                                rpcResponse.MessageId = msg.GetType().FullName;
                             }
                             else
                             {
-                                rpcResponse.Message = (IMessage)await ServiceBus.Instance.Publish(rpcRequest);
+                                rpcResponse.ErrorCode = 404;
+                                rpcResponse.ErrorMsg = "Not Found";
                             }
                         }
                         catch (Exception ex)
@@ -54,8 +67,7 @@
                     {
                         var rpcResponse = new RpcMessage
                         {
-                            Type = (byte)RpcMessageType.PingRes,
-                            Message = new Pong()
+                            Type = (byte)RpcMessageType.PingRes
                         };
 
                         WriteAndFlushAsync(ctx, rpcResponse);
@@ -108,8 +120,7 @@
                     context.WriteAndFlushAsync(
                         new RpcMessage
                         {
-                            Type = (byte)RpcMessageType.PingReq,
-                            Message = new Ping()
+                            Type = (byte)RpcMessageType.PingReq
                         });
                 }
             }

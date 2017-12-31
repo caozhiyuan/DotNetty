@@ -28,7 +28,6 @@
             {
                 module.Initialize();
             }
-            ConcurrentDictionary<string, Type> messageTypes = Registrations.MessageTypes;
 
             var bossGroup = new MultithreadEventLoopGroup(1);
             var workerGroup = new MultithreadEventLoopGroup();
@@ -46,7 +45,7 @@
                         IChannelPipeline pipeline = channel.Pipeline;
                         pipeline.AddLast(new IdleStateHandler(180, 120, 0));
                         pipeline.AddLast(new LengthFieldBasedFrameDecoder(int.MaxValue, 0, 4, 0, 0));
-                        pipeline.AddLast(new RpcDecoder(messageTypes));
+                        pipeline.AddLast(new RpcDecoder());
                         pipeline.AddLast(new RpcEncoder());
                         pipeline.AddLast(new RpcHandler());
                     }));

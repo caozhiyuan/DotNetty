@@ -7,7 +7,7 @@
         public  int Id { get; set; }
     }
 
-    public class CityInfo : IMessage
+    public class CityInfo
     {
         public int Id { get; set; }
 
