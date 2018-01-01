@@ -38,6 +38,12 @@
             string errorMsg = input.ToString(input.ReaderIndex, errorMsgLen, Encoding.UTF8);
             input.SetReaderIndex(input.ReaderIndex + errorMsgLen);
 
+            int leftLen = headerLen - (4 + 1 + 2 + mIdLen + 2 + 2 + errorMsgLen);
+            if (leftLen > 0)
+            {
+                input.SetReaderIndex(input.ReaderIndex + leftLen);
+            }
+
             int msgLen = dataLength - headerLen - 2;
             var message = new byte[msgLen];
             input.ReadBytes(message);
