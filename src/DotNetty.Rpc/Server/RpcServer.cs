@@ -37,7 +37,9 @@
                     .Group(bossGroup, workerGroup)
                     .Channel<TcpServerSocketChannel>()
                     .Option(ChannelOption.SoBacklog, 1024)
+                    .Option(ChannelOption.SoReuseaddr, true)
                     .ChildOption(ChannelOption.SoKeepalive, true)
+                    .ChildOption(ChannelOption.SoReuseaddr, true)
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;

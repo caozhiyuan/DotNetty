@@ -33,6 +33,7 @@ namespace DotNetty.Rpc.Client
                 .Channel<TcpSocketChannel>()
                 .Option(ChannelOption.TcpNodelay, true)
                 .Option(ChannelOption.SoKeepalive, true)
+                .Option(ChannelOption.SoReuseaddr, true)
                 .Handler(new ActionChannelInitializer<ISocketChannel>(c =>
                 {
                     IChannelPipeline pipeline = c.Pipeline;
