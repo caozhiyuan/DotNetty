@@ -244,11 +244,20 @@ namespace DotNetty.Common
 
             public bool Close(object trackedObject)
             {
-                if (this.owner.gcNotificationMap.Remove(trackedObject))
+                if (this.owner.gcNotificationMap.TryGetValue(trackedObject, out GCNotice notice))
                 {
+                    // The close is called by byte buffer release, in this case
+                    // we suppress the GCNotice finalize to prevent false positive
+                    // report where the byte buffer instance gets reused by thread
+                    // local cache and the existing GCNotice finalizer still holds 
+                    // the same byte buffer instance.
+                    GC.SuppressFinalize(notice);
+
+                    Debug.Assert(this.owner.gcNotificationMap.Remove(trackedObject));
                     Interlocked.Exchange(ref this.head, null);
                     return true;
                 }
+
                 return false;
             }
 
