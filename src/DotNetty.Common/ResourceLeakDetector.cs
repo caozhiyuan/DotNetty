@@ -14,7 +14,6 @@ namespace DotNetty.Common
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
-    using Nito;
 
     public class ResourceLeakDetector
     {
@@ -57,7 +56,6 @@ namespace DotNetty.Common
 
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ResourceLeakDetector>();
 
-        static Timer timer;
         static ResourceLeakDetector()
         {
             // If new property name is present, use it
@@ -75,14 +73,6 @@ namespace DotNetty.Common
                 Logger.Debug("-D{}: {}", PropLevel, level.ToString().ToLower());
                 Logger.Debug("-D{}: {}", PropTargetRecords, TargetRecords);
             }
-            timer = new Timer(GCNoticesClear, null, 0, 5000);
-        }
-
-        static readonly ConcurrentDictionary<GCNotice, string> GCNotices = new ConcurrentDictionary<GCNotice, string>();
-
-        static void GCNoticesClear(object state)
-        {
-            GCNotices.Clear();
         }
 
         // Should be power of two.
@@ -96,9 +86,7 @@ namespace DotNetty.Common
         /// </summary>
         public static DetectionLevel Level { get; set; }
 
-
         readonly ConditionalWeakTable<object, GCNotice> gcNotificationMap = new ConditionalWeakTable<object, GCNotice>();
-
         readonly ConcurrentDictionary<string, bool> reportedLeaks = new ConcurrentDictionary<string, bool>();
 
         readonly string resourceType;
@@ -107,7 +95,6 @@ namespace DotNetty.Common
         public ResourceLeakDetector(string resourceType)
             : this(resourceType, DefaultSamplingInterval)
         {
-          
         }
 
         public ResourceLeakDetector(string resourceType, int samplingInterval)
@@ -204,9 +191,7 @@ namespace DotNetty.Common
                 }
                 else
                 {
-                    var gcNotice = new GCNotice(this, referent);
-                    GCNotices.TryAdd(gcNotice, string.Empty);
-                    owner.gcNotificationMap.Add(referent, gcNotice);
+                    owner.gcNotificationMap.Add(referent, new GCNotice(this, referent));
                 }
                 this.head = RecordEntry.Bottom;
             }
@@ -279,7 +264,7 @@ namespace DotNetty.Common
             // This is called from GCNotice finalizer 
             internal void CloseFinal(object trackedObject)
             {
-                if (this.owner.gcNotificationMap.Remove(trackedObject)
+                if (this.owner.gcNotificationMap.Remove(trackedObject) 
                     && Volatile.Read(ref this.head) != null)
                 {
                     this.owner.ReportLeak(this);
@@ -397,7 +382,7 @@ namespace DotNetty.Common
 
                 // TODO: Use StackTrace class and support excludedMethods NETStandard2.0
                 // Append the stack trace.
-                buf.Append(this.stackTrace).Append(StringUtil.Newline);
+                buf.Append(this.stackTrace);
                 return buf.ToString();
             }
         }
