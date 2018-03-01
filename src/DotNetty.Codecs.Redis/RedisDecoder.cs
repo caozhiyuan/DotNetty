@@ -279,7 +279,7 @@ namespace DotNetty.Codecs.Redis
             Contract.Requires(output != null);
 
             int readableBytes = byteBuffer.ReadableBytes;
-            if (readableBytes == 0)
+            if (readableBytes == 0 || this.remainingBulkLength == 0 && readableBytes < RedisConstants.EndOfLineLength)
             {
                 return false;
             }

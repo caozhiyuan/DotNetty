@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Codecs.Redis\DotNetty.Codecs.Redis.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
+    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
