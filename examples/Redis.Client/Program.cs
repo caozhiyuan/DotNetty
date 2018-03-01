@@ -58,7 +58,7 @@ namespace Redis.Client
                                 p.AddLast(new RedisClientHandler());
                             }));
 
-                IChannel ch = await b.ConnectAsync("10.1.4.204", 6379);
+                IChannel ch = await b.ConnectAsync("10.1.62.66", 6379);
 
                 while (true)
                 {
