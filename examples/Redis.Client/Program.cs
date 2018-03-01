@@ -30,7 +30,7 @@ namespace Redis.Client
             {
                 ExampleHelper.SetConsoleLogger();
 
-                RedisTest().Wait();
+                Task.WaitAll(RedisTest(), RedisTest());
             }
             catch (Exception e)
             {
@@ -76,21 +76,23 @@ namespace Redis.Client
             var clientRpcHandler = ch.Pipeline.Get<RedisClientHandler>();
             var sw = new Stopwatch();
             sw.Start();
-            int count = 10000;
+            int count = 50000;
             var cde = new CountdownEvent(count);
-            for (int i = 0; i < count; i++)
-            {
-                Task<object> task = clientRpcHandler.SendRequest(new[] { "get", "a" });
-                task.ContinueWith(
-                    n =>
-                    {
-                        if (n.IsFaulted)
+
+            Parallel.For(0, count,
+                (i) =>
+                {
+                    Task<object> task = clientRpcHandler.SendRequest(new[] { "get", "Suiyi.ProductData.Models.Products.Product_257" });
+                    task.ContinueWith(
+                        n =>
                         {
-                            Console.WriteLine(n);
-                        }
-                        cde.Signal();
-                    });
-            }
+                            if (n.IsFaulted)
+                            {
+                                Console.WriteLine(n);
+                            }
+                            cde.Signal();
+                        });
+                });
 
             cde.Wait();
 
