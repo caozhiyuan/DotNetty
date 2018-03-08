@@ -30,7 +30,15 @@ namespace Redis.Client
             {
                 ExampleHelper.SetConsoleLogger();
 
-                Task.WaitAll(RedisTest(), RedisTest());
+     
+                while (true)
+                {
+         
+
+                    Task.WaitAll(RedisTest(),RedisTest(),RedisTest(),RedisTest());
+
+                }
+
             }
             catch (Exception e)
             {
@@ -38,45 +46,45 @@ namespace Redis.Client
             }
         }
 
+
+        static MultithreadEventLoopGroup group = new MultithreadEventLoopGroup();
+
         static async Task RedisTest()
         {
-            var group = new MultithreadEventLoopGroup();
-            try
-            {
-                var b = new Bootstrap();
-                b.Group(group)
-                    .Channel<TcpSocketChannel>()
-                    .Handler(
-                        new ActionChannelInitializer<ISocketChannel>(
-                            channel =>
-                            {
-                                IChannelPipeline p = channel.Pipeline;
-                                p.AddLast(new RedisDecoder());
-                                p.AddLast(new RedisBulkStringAggregator());
-                                p.AddLast(new RedisArrayAggregator());
-                                p.AddLast(new RedisEncoder());
-                                p.AddLast(new RedisClientHandler());
-                            }));
+            var b = new Bootstrap();
+            b.Group(group)
+                .Channel<TcpSocketChannel>()
+                .Handler(
+                    new ActionChannelInitializer<ISocketChannel>(
+                        channel =>
+                        {
+                            IChannelPipeline p = channel.Pipeline;
+                            p.AddLast(new RedisDecoder());
+                            p.AddLast(new RedisBulkStringAggregator());
+                            p.AddLast(new RedisArrayAggregator());
+                            p.AddLast(new RedisEncoder());
+                            p.AddLast(new RedisClientHandler());
+                        }));
 
-                IChannel ch = await b.ConnectAsync("10.1.62.66", 6379);
+            IChannel ch = await b.ConnectAsync("10.1.62.66", 6379);
+            var clientRpcHandler = ch.Pipeline.Get<RedisClientHandler>();
 
-                while (true)
-                {
-                    RunTest(ch);
-                }
-            }
-            finally
-            {
-                await group.ShutdownGracefullyAsync();
-            }
+            await clientRpcHandler.SendRequest(new[] { "get", "Suiyi.ProductData.Models.Products.Product_257" });
+
+            var sw = new Stopwatch();
+            sw.Start();
+
+            RunTest(ch);
+
+            sw.Stop();
+            Console.WriteLine(sw.ElapsedMilliseconds);
         }
 
         static void RunTest(IChannel ch)
         {
             var clientRpcHandler = ch.Pipeline.Get<RedisClientHandler>();
-            var sw = new Stopwatch();
-            sw.Start();
-            int count = 50000;
+
+            int count = 25000;
             var cde = new CountdownEvent(count);
 
             Parallel.For(0, count,
@@ -95,10 +103,6 @@ namespace Redis.Client
                 });
 
             cde.Wait();
-
-            sw.Stop();
-            Console.WriteLine(sw.ElapsedMilliseconds);
-            Console.ReadLine();
         }
     }
 
