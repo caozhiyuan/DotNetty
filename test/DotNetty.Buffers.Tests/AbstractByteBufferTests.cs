@@ -397,7 +397,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void RandomMediumLEAccess() => this.RandomMediumAccess0(false);
 
-        public void RandomMediumAccess0(bool testBigEndian)
+        void RandomMediumAccess0(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 2; i += 3)
             {
@@ -433,7 +433,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void RandomUnsignedMediumLEAccess() => this.RandomUnsignedMediumAccess0(false);
 
-        public void RandomUnsignedMediumAccess0(bool testBigEndian)
+        void RandomUnsignedMediumAccess0(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 2; i += 3)
             {
@@ -1958,23 +1958,23 @@ namespace DotNetty.Buffers.Tests
             set.Add(elemB);
 
             Assert.Equal(2, set.Count);
-            Assert.True(set.Contains(this.ReleaseLater(elemA.Copy())));
+            Assert.Contains(this.ReleaseLater(elemA.Copy()), set);
 
             IByteBuffer elemBCopy = this.ReleaseLater(elemB.Copy());
-            Assert.True(set.Contains(elemBCopy));
+            Assert.Contains(elemBCopy, set);
 
             this.buffer.Clear();
             this.buffer.WriteBytes(elemA.Duplicate());
 
             Assert.True(set.Remove(this.buffer));
-            Assert.False(set.Contains(elemA));
-            Assert.Equal(1, set.Count);
+            Assert.DoesNotContain(elemA, set);
+            Assert.Single(set);
 
             this.buffer.Clear();
             this.buffer.WriteBytes(elemB.Duplicate());
             Assert.True(set.Remove(this.buffer));
-            Assert.False(set.Contains(elemB));
-            Assert.Equal(0, set.Count);
+            Assert.DoesNotContain(elemB, set);
+            Assert.Empty(set);
         }
 
         // Test case for https://github.com/netty/netty/issues/325
@@ -2263,6 +2263,28 @@ namespace DotNetty.Buffers.Tests
         public void SetBytesAfterRelease3() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().SetBytes(0, this.ReleaseLater(Unpooled.Buffer()), 0, 1));
 
         [Fact]
+        public void SetUsAsciiCharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetCharSequenceAfterRelease0(Encoding.ASCII));
+
+        [Fact]
+        public void SetUtf8CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetCharSequenceAfterRelease0(Encoding.UTF8));
+
+        [Fact]
+        public void SetUtf16CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetCharSequenceAfterRelease0(Encoding.Unicode));
+
+        void SetCharSequenceAfterRelease0(Encoding encoding) => this.ReleasedBuffer().SetCharSequence(0, new StringCharSequence("x"), encoding);
+
+        [Fact]
+        public void SetUsAsciiStringAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetStringAfterRelease0(Encoding.ASCII));
+
+        [Fact]
+        public void SetUtf8StringAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetStringAfterRelease0(Encoding.UTF8));
+
+        [Fact]
+        public void SetUtf16StringAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetStringAfterRelease0(Encoding.Unicode));
+
+        void SetStringAfterRelease0(Encoding encoding) => this.ReleasedBuffer().SetString(0, "x", encoding);
+
+        [Fact]
         public void SetBytesAfterRelease4() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().SetBytes(0, new byte[8]));
 
         [Fact]
@@ -2404,6 +2426,28 @@ namespace DotNetty.Buffers.Tests
         public void WriteZeroAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().WriteZero(1));
 
         [Fact]
+        public void WriteUsAsciiCharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteCharSequenceAfterRelease0(Encoding.ASCII));
+
+        [Fact]
+        public void WriteUtf8CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteCharSequenceAfterRelease0(Encoding.UTF8));
+
+        [Fact]
+        public void WriteUtf16CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteCharSequenceAfterRelease0(Encoding.Unicode));
+
+        void WriteCharSequenceAfterRelease0(Encoding encoding) => this.ReleasedBuffer().WriteCharSequence(new StringCharSequence("x"), encoding);
+
+        [Fact]
+        public void WriteUsAsciiStringAfterRelease()  => Assert.Throws<IllegalReferenceCountException>(() => this.WriteStringAfterRelease0(Encoding.ASCII));
+
+        [Fact]
+        public void WriteUtf8StringAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteStringAfterRelease0(Encoding.UTF8));
+
+        [Fact]
+        public void WriteUtf16StringAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteStringAfterRelease0(Encoding.Unicode));
+
+        void WriteStringAfterRelease0(Encoding encoding) => this.ReleasedBuffer().WriteString("x", encoding);
+
+        [Fact]
         public void ForEachByteAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().ForEachByte(new TestByteProcessor()));
 
         [Fact]
@@ -2441,7 +2485,7 @@ namespace DotNetty.Buffers.Tests
             {
                 Assert.Throws<IllegalReferenceCountException>(() =>
                 {
-                    byte[] a = buf.Array;
+                    byte[] _ = buf.Array;
                 });
             }
         }
@@ -2490,6 +2534,132 @@ namespace DotNetty.Buffers.Tests
             {
                 buf.Release();
             }
+        }
+
+
+        [Fact]
+        public virtual void WriteUsAsciiCharSequenceExpand() => this.WriteCharSequenceExpand(Encoding.ASCII);
+
+        [Fact]
+        public virtual void WriteUtf8CharSequenceExpand() => this.WriteCharSequenceExpand(Encoding.UTF8);
+
+        [Fact]
+        public virtual void WriteUtf16CharSequenceExpand() => this.WriteCharSequenceExpand(Encoding.Unicode);
+
+        void WriteCharSequenceExpand(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(1);
+            try
+            {
+                int writerIndex = buf.Capacity - 1;
+                buf.SetWriterIndex(writerIndex);
+                int written = buf.WriteCharSequence(new StringCharSequence("AB"), encoding);
+                Assert.Equal(writerIndex, buf.WriterIndex - written);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void SetUsAsciiCharSequenceNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetCharSequenceNoExpand(Encoding.ASCII));
+
+        [Fact]
+        public void SetUtf8CharSequenceNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetCharSequenceNoExpand(Encoding.UTF8));
+
+        [Fact]
+        public void SetUtf16CharSequenceNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetCharSequenceNoExpand(Encoding.Unicode));
+
+        void SetCharSequenceNoExpand(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(1);
+            try
+            {
+                buf.SetCharSequence(0, new StringCharSequence("AB"), encoding);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void SetUsAsciiStringNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetStringNoExpand(Encoding.ASCII));
+
+        [Fact]
+        public void SetUtf8StringNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetStringNoExpand(Encoding.UTF8));
+
+        [Fact]
+        public void SetUtf16StringNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetStringNoExpand(Encoding.Unicode));
+
+        void SetStringNoExpand(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(1);
+            try
+            {
+                buf.SetString(0, "AB", encoding);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void SetUsAsciiCharSequence() => this.SetGetCharSequence(Encoding.ASCII);
+
+        [Fact]
+        public void SetUtf8CharSequence() => this.SetGetCharSequence(Encoding.UTF8);
+
+        [Fact]
+        public void SetUtf16CharSequence() => this.SetGetCharSequence(Encoding.Unicode);
+
+        void SetGetCharSequence(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(16);
+            var sequence = new StringCharSequence("AB");
+            int bytes = buf.SetCharSequence(1, sequence, encoding);
+            Assert.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
+            buf.Release();
+        }
+
+        [Fact]
+        public void SetUsAsciiString() => this.SetGetString(Encoding.ASCII);
+
+        [Fact]
+        public void SetUtf8String() => this.SetGetString(Encoding.UTF8);
+
+        [Fact]
+        public void SetUtf16String() => this.SetGetString(Encoding.Unicode);
+
+        void SetGetString(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(16);
+            const string Sequence = "AB";
+            int bytes = buf.SetString(1, Sequence, encoding);
+            Assert.Equal(Sequence, buf.GetString(1, bytes, encoding));
+            buf.Release();
+        }
+
+        [Fact]
+        public void WriteReadUsAsciiString() => this.WriteReadString(Encoding.ASCII);
+
+        [Fact]
+        public void WriteReadUtf8String() => this.WriteReadString(Encoding.UTF8);
+
+        [Fact]
+        public void WriteReadUtf16String() => this.WriteReadString(Encoding.Unicode);
+
+        void WriteReadString(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(16);
+            const string Sequence = "AB";
+            buf.SetWriterIndex(1);
+            int bytes = buf.WriteString(Sequence, encoding);
+            buf.SetReaderIndex(1);
+            Assert.Equal(Sequence, buf.ReadString(bytes, encoding));
+            buf.Release();
         }
 
         [Fact]
@@ -3192,7 +3362,6 @@ namespace DotNetty.Buffers.Tests
             }
         }
 
-
         void RefCnt0(bool parameter)
         {
             for (int i = 0; i < 10; i++)
@@ -3239,8 +3408,8 @@ namespace DotNetty.Buffers.Tests
             buf.Clear();
             Assert.False(buf.IsReadable());
             ArraySegment<byte>[] nioBuffers = buf.GetIoBuffers();
-            Assert.Equal(1, nioBuffers.Length);
-            Assert.Equal(0, nioBuffers[0].Count);
+            Assert.Single(nioBuffers);
+            Assert.Empty(nioBuffers[0]);
             buf.Release();
         }
 
@@ -3325,6 +3494,30 @@ namespace DotNetty.Buffers.Tests
                 buf.AdjustCapacity(4);
                 Assert.Equal(4, buf.Capacity);
                 Assert.Equal(13, buf.MaxCapacity);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void ReaderIndexLargerThanWriterIndex()
+        {
+            const string Content1 = "hello";
+            const string Content2 = "world";
+            int length = Content1.Length + Content2.Length;
+            IByteBuffer buf = this.NewBuffer(length);
+            buf.SetIndex(0, 0);
+            buf.WriteString(Content1, Encoding.ASCII);
+            buf.MarkWriterIndex();
+            buf.SkipBytes(Content1.Length);
+            buf.WriteString(Content2, Encoding.ASCII);
+            buf.SkipBytes(Content2.Length);
+            Assert.True(buf.ReaderIndex <= buf.WriterIndex);
+            try
+            {
+                Assert.Throws<IndexOutOfRangeException>(() => buf.ResetWriterIndex());
             }
             finally
             {
