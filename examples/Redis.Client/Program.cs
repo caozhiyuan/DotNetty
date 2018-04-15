@@ -155,29 +155,25 @@ namespace Redis.Client
                     string content = message.Content;
                     return new RedisResponse
                     {
-                        Content = content,
-                        RedisMessageType = (int)RedisMessageType.SimpleString
+                        Content = content
                     };
                 case ErrorRedisMessage _:
                     string errmsg = ((ErrorRedisMessage)msg).Content;
                     return new RedisResponse
                     {
-                        Content = errmsg,
-                        RedisMessageType = (int)RedisMessageType.Error
+                        Content = errmsg
                     };
                 case IntegerRedisMessage _:
                     long i = ((IntegerRedisMessage)msg).Value;
                     return new RedisResponse
                     {
-                        Integer = i,
-                        RedisMessageType = (int)RedisMessageType.Integer
+                        Integer = i
                     };
                 case IFullBulkStringRedisMessage _:
                     string str = GetString((IFullBulkStringRedisMessage)msg);
                     return new RedisResponse
                     {
-                        Content = str,
-                        RedisMessageType = (int)RedisMessageType.Error
+                        Content = str
                     };
                 case ArrayRedisMessage _:
                     var redisresponses = new List<object>();
@@ -187,8 +183,7 @@ namespace Redis.Client
                     }
                     return new RedisResponse
                     {
-                        Content = redisresponses,
-                        RedisMessageType = (int)RedisMessageType.Array
+                        Content = redisresponses
                     };
                 default:
                     throw new CodecException("unknown message type: " + msg);

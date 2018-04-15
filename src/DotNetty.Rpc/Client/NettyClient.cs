@@ -18,16 +18,18 @@ namespace DotNetty.Rpc.Client
 
     public class NettyClient
     {
-        const int ConnectTimeout = 10000;
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance("NettyClient");
         static readonly IEventLoopGroup WorkerGroup = new MultithreadEventLoopGroup();
-
-        private readonly ManualResetEventSlim emptyEvent = new ManualResetEventSlim(false, 1);
-        private Bootstrap bootstrap;
+        
+        private readonly Bootstrap bootstrap;
         private RpcClientHandler clientRpcHandler;
+        private readonly EndPoint endPoint;
 
-        internal void Connect(EndPoint socketAddress)
+        private readonly SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+
+        public NettyClient(EndPoint endPoint)
         {
+            this.endPoint = endPoint;
             this.bootstrap = new Bootstrap();
             this.bootstrap.Group(WorkerGroup)
                 .Channel<TcpSocketChannel>()
@@ -43,17 +45,49 @@ namespace DotNetty.Rpc.Client
                     pipeline.AddLast(new RpcDecoder());
                     pipeline.AddLast(new RpcEncoder());
 
-                    pipeline.AddLast(new ReconnectHandler(this.DoConnect));
+                    pipeline.AddLast(new ReconnectHandler(this.DoConnectIfNeed));
 
                     pipeline.AddLast(new RpcClientHandler());
                 }));
 
-            this.DoConnect(socketAddress);
+        }
+
+        private bool IsChannelInactive
+        {
+            get
+            {
+                IChannel channel = this.clientRpcHandler?.GetChannel();
+                if (channel == null)
+                {
+                    return true;
+                }
+                return !channel.Active;
+            }
+        }
+
+        private async Task DoConnectIfNeed(EndPoint socketAddress)
+        {
+            if (this.IsChannelInactive)
+            {
+                await this.semaphoreSlim.WaitAsync();
+                try
+                {
+                    if (this.IsChannelInactive)
+                    {
+                        IChannel channel = await this.bootstrap.ConnectAsync(socketAddress);
+                        this.clientRpcHandler = channel.Pipeline.Get<RpcClientHandler>();
+                    }
+                }
+                finally
+                {
+                    this.semaphoreSlim.Release();
+                }
+            }
         }
 
         public async Task<T> SendRequest<T>(AbsMessage<T> request, int timeout = 10000)
         {
-            this.WaitConnect();
+            await this.DoConnectIfNeed(this.endPoint);
 
             var rpcRequest = new RpcMessage
             {
@@ -71,50 +105,6 @@ namespace DotNetty.Rpc.Client
                 return default(T);
             }
             return (T)SerializationUtil.Deserialize(Encoding.UTF8.GetString(rpcReponse.Message), typeof(T));
-        }
-
-        void WaitConnect()
-        {
-            if (this.clientRpcHandler == null || !this.clientRpcHandler.GetChannel().Active)
-            {
-                if (!this.emptyEvent.Wait(ConnectTimeout))
-                {
-                    throw new Handlers.TimeoutException("Channel Connect TimeOut");
-                }
-            }
-            if (this.clientRpcHandler == null)
-            {
-                throw new Exception("ClientRpcHandler Null");
-            }
-        }
-
-        private Task DoConnect(EndPoint socketAddress)
-        {
-            this.emptyEvent.Reset();
-;
-            Task<IChannel> task = this.bootstrap.ConnectAsync(socketAddress);
-            return task.ContinueWith(n =>
-            {
-                if (n.IsFaulted || n.IsCanceled)
-                {
-                    Logger.Info("NettyClient connected to {} failed", socketAddress);
-                    if (this.clientRpcHandler != null)
-                    {
-                        IChannel channel0 = this.clientRpcHandler.GetChannel();
-                        channel0.EventLoop.Schedule(_ => this.DoConnect((EndPoint)_), socketAddress, TimeSpan.FromMilliseconds(1000));
-                    }
-                    else
-                    {
-                        WorkerGroup.GetNext().Schedule(_ => this.DoConnect((EndPoint)_), socketAddress, TimeSpan.FromMilliseconds(1000));
-                    }
-                }
-                else
-                {
-                    Logger.Info("NettyClient connected to {}", socketAddress);
-                    this.clientRpcHandler = n.Result.Pipeline.Get<RpcClientHandler>();
-					this.emptyEvent.Set();
-                }
-            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         }
     }
 }

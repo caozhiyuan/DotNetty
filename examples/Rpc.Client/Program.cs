@@ -24,7 +24,7 @@ namespace Rpc.Client
                 
                 while (true)
                 {
-                    int threadNum = 8;
+                    int threadNum = 2;
                     int requestNum = 10000;
                     var sw = new Stopwatch();
                     sw.Start();
@@ -60,7 +60,7 @@ namespace Rpc.Client
         static void Test(object obj)
         {
             int count = Convert.ToInt32(obj);
-            string serverAddress = "10.1.4.204:9008";
+            string serverAddress = "127.0.0.1:9008";
 
             var cde = new CountdownEvent(count);
             for (int i = 0; i < count; i++)

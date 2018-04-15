@@ -19,12 +19,11 @@
             return new Lazy<NettyClient>(
                 () =>
                 {
-                    var nettyClient = new NettyClient();
                     string[] array = serverAddress.Split(':');
                     string host = array[0];
                     int port = Convert.ToInt32(array[1]);
                     EndPoint remotePeer = new IPEndPoint(IPAddress.Parse(host).MapToIPv6(), port);
-                    nettyClient.Connect(remotePeer);
+                    var nettyClient = new NettyClient(remotePeer);
                     return nettyClient;
                 });
         }
