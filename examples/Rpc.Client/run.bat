@@ -1,1 +1,1 @@
-dotnet run -c release -f netcoreapp2.0
+dotnet run -c release
