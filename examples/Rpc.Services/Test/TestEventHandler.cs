@@ -21,7 +21,7 @@
 
         ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(new ConfigurationOptions
         {
-            EndPoints = { "192.168.1.104:6379" }
+            EndPoints = { "127.0.0.1:6379" }
         });
 
         private Task<TestAddressQuery> Handler(TestAddressQuery eventData)
