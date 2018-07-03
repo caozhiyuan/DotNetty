@@ -1,10 +1,15 @@
 ﻿namespace Rpc.Services.Test
 {
     using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Threading;
     using DotNetty.Rpc.Service;
-    using Rpc.Models;
     using System.Threading.Tasks;
     using Rpc.Models.Test;
+    using StackExchange.Redis;
 
     public class TestEventHandler: EventHandlerImpl
     {
@@ -13,6 +18,11 @@
             this.AddEventListener<TestCityQuery>(this.Handler);
             this.AddEventListener<TestAddressQuery>(this.Handler);
         }
+
+        ConnectionMultiplexer redis = ConnectionMultiplexer.Connect(new ConfigurationOptions
+        {
+            EndPoints = { "192.168.1.104:6379" }
+        });
 
         private Task<TestAddressQuery> Handler(TestAddressQuery eventData)
         {
@@ -23,14 +33,37 @@
             return Task.FromResult(eventData);
         }
 
-        private Task<TestCityQuery> Handler(TestCityQuery eventData)
+        static readonly ConcurrentBag<string> Temps = new ConcurrentBag<string>();
+        static System.Threading.Timer timer;
+
+        static TestEventHandler()
         {
+            ThreadPool.SetMaxThreads(1024, 1024);
+            timer = new Timer(Callback, null, 10000, 10000);
+        }
+
+        static void Callback(object state)
+        {
+            Console.WriteLine("Timer Callback");
+            File.WriteAllLines("test.txt", Temps);
+        }
+
+        private async Task<TestCityQuery> Handler(TestCityQuery eventData)
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+            IDatabase db = this.redis.GetDatabase();
+            RedisValue str = await db.StringGetAsync("test");
             eventData.ReturnValue = new CityInfo()
             {
                 Id = eventData.Id,
-                Name = "{\"Id\":1,\"CityId\":1,\"CityFlag\":\"sz\",\"WebApiUrl\":\"https://api1.34580.com/\",\"ImageSiteUrl\":\"http://picpro-sz.34580.com/\",\"CityName\":\"苏州市\"}Hello world"
+                Name = str
             };
-            return Task.FromResult(eventData);
+            sw.Stop();
+            Temps.Add(sw.ElapsedMilliseconds.ToString());
+            return eventData;
         }
+
+
     }
 }
